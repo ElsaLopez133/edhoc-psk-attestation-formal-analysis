@@ -1,0 +1,133 @@
+
+// ******************************************************************
+// ************** Reachability   ************************************
+// ******************************************************************
+
+#ifdef SanityChecks
+
+/* there exists at least one initiator AcceptI */
+lemma exists_acceptI[output=[proverif]]:
+  exists-trace
+  "Ex cid m idI prk x gy credI credR psk #t.
+    AcceptI(cid, idI, m, credI, credR, prk, x, gy, psk) @ t"
+
+/* there exists at least one responder AcceptR */
+lemma exists_acceptR[output=[proverif]]:
+  exists-trace
+  "Ex cid idR m prk gx y credI credR psk #t.
+    AcceptR(cid, idR, m, credI, credR, prk, gx, y, psk) @ t"
+
+#endif
+
+/* there exists at least one initiator AcceptI */
+lemma exists_acceptI:
+  exists-trace
+  "Ex cid m prk x gy credI credR psk #t.
+    AcceptI(cid, m, credI, credR, prk, x, gy, psk) @ t"
+
+/* there exists at least one responder AcceptR */
+lemma exists_acceptR:
+  exists-trace
+  "Ex cid m prk gx y credI credR psk #t.
+    AcceptR(cid, m, credI, credR, prk, gx, y, psk) @ t"
+
+/* there exists at least one initiator StartI */
+lemma exists_startI:
+  exists-trace
+  "Ex cid m credI credR psk #t.
+    StartI(cid, m, credI, credR, psk) @ t"
+
+/* there exists at least one responder StartR */
+lemma exists_startR:
+  exists-trace
+  "Ex cid m credR psk #t.
+    StartR(cid, m, credR, psk) @ t"
+
+lemma exists_VerifiedSignature:
+  exists-trace
+  "Ex cid m credI credR psk signature #t.
+    VerifiedSignature(cid, credI, credR, signature, psk) @ t"
+
+lemma exists_FailedSignature:
+  exists-trace
+  "Ex cid m credI credR psk signature #t.
+    FailedSignature(cid, credI, credR, signature, psk) @ t"
+
+
+lemma exists_VerifiedNonce:
+  exists-trace
+  "Ex cid m credI credR psk nonce #t.
+    VerifiedNonce(cid, credI, credR, nonce, psk) @ t"
+
+
+// ******************************************************************
+// ****Full Agreement: Authentication and key confirmation***********
+// ******************************************************************
+
+// Authentication of the Initiator to the Responder
+// If a Responder accepted a session, i.e., it finished, then there must 
+// be a Initiator that derived the same values (same prk), 
+// unless PSK and subjects were leaked, in which case the attacker can forge
+// a session as an Initiator
+
+// This lemma proves uniqueness and mutual authentication. So, if there are two sessions
+// of R, with the same prk and psk, then they must be the same session AND and Initiator must
+// have enageged in a session, unless the PSK or subjects were leaked
+// If this happens, then the attacker could play the role of I and there would not
+// be an Initiator running in the session.
+lemma full_agreement_RI:
+  "All cid1 cid2 m credI1 credI2 credR1 credR2 prk gx1 gx2 y1 y2 psk #i #j #k #l #c.
+     AcceptR(cid1, m, credI1, credR1, prk, gx1, y1, psk)@i
+     & AcceptR(cid2, m, credI2, credR2, prk, gx2, y2, psk)@j
+     & Honest(psk)@k & HonestSubject(credI1)@l & HonestSubject(credI2)@c
+   ==> (Ex cid credI credR x gy prk #t.
+          DerivedI(cid, m, credI, credR, prk, x, gy, psk)@t & t < i & t < j 
+          & cid1 = cid2 & gx1 = gx2 & y1 = y2 & credI1 = credI2 & credR1 = credR2 
+          & credI = credI1 & credR = credR1 & #i = #j)
+    | 
+    (Ex #t. Compromise(psk)@t & t < j)
+    "     
+
+// Authentication of the Responder to the Initiator
+// If an Initiator accepted a session, i.e., it finished, then there must 
+// be a Responder that has already completed the protocol with the same prk, 
+// unless PSK and subjects were leaked, in which case the attacker can forge
+// a session as a Repsonder
+
+lemma full_agreement_IR:
+  "All cid1 cid2 m credI1 credI2 credR1 credR2 prk x1 x2 gy1 gy2 psk #i #j #k #l #c.
+     AcceptI(cid1, m, credI1, credR1, prk, x1, gy1, psk)@i
+     & AcceptI(cid2, m, credI2, credR2, prk, x2, gy2, psk)@j
+     & Honest(psk)@k &HonestSubject(credR1)@l & HonestSubject(credR2)@c
+   ==> (Ex cid credI credR gx y prk #t.
+          AcceptR(cid, m, credI, credR, prk, gx, y, psk)@t & t < i & t < j 
+          & cid1 = cid2 & x1 = x2 & gy1 = gy2 & credI1 = credI2 & credR1 = credR2 
+          & credI = credI1 & credR = credR1 & #i = #j)
+    | 
+    (Ex #t. Compromise(psk)@t & t < j)
+    "   
+
+// ******************************************************************
+// ***************** Attestation ************************************
+// ******************************************************************
+
+lemma AttestationEvidenceUnique:
+  "All credI1 credI2 credR1 credR2 nonce meas1 sig1 meas2 sig2 cid1 cid2 psk #i #j.
+    AttestationAccepted(cid1, credI1, credR1, nonce, meas1, sig1, psk) @ i
+    &
+    AttestationAccepted(cid2, credI2, credR2, nonce, meas2, sig2, psk) @ j
+  ==> (#i = #j)
+  "
+
+// ******************************************************************
+// ************** Attacker capabilities *****************************
+// ******************************************************************
+
+// lemma AttackerGetsAnyDHShare:
+//   "Ex X #i. (LeakShare(X)@i)"
+
+// lemma AttackerGetsSessionKey:
+//   "Ex key #i. LeakSessionKey(key)@i"
+
+// lemma AttackerGetsPSK:
+//   "Ex psk #i. Compromise(psk)@i"

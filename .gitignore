@@ -1,0 +1,7 @@
+temp/
+models/graphs/
+models/results/
+models/single_instance/
+debug/
+models/result_proverif.out
+models/results.csv
