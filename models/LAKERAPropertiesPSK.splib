@@ -45,18 +45,18 @@ lemma exists_startR:
 
 lemma exists_VerifiedSignature:
   exists-trace
-  "Ex cid m credI credR psk signature #t.
+  "Ex cid credI credR psk signature #t.
     VerifiedSignature(cid, credI, credR, signature, psk) @ t"
 
 lemma exists_FailedSignature:
   exists-trace
-  "Ex cid m credI credR psk signature #t.
+  "Ex cid credI credR psk signature #t.
     FailedSignature(cid, credI, credR, signature, psk) @ t"
 
 
 lemma exists_VerifiedNonce:
   exists-trace
-  "Ex cid m credI credR psk nonce #t.
+  "Ex cid credI credR psk nonce #t.
     VerifiedNonce(cid, credI, credR, nonce, psk) @ t"
 
 

@@ -1,13 +1,13 @@
 /*
- * Protocol:   EDHOC-PSK
- * Source:     draft-ietf-lake-edhoc-psk
+ * Protocol:   Remote Attestation for EDHOC-PSK
+ * Source:     
 
  Scenarios to check ideally:
  - `tamarin-prover -D=LeakShare`
  - `tamarin-prover -D=LeakSKey`
 */
 
-theory edhoc_psk_sapic
+theory edhoc_psk_ra_sapic
 
 begin
 
@@ -25,27 +25,30 @@ functions:
   get_pk_attkey/3 [destructor] ,
 
   // Credential modeling functions
-  make_id/3,                        // make_id(cred_i, cred_r, psk) -> ID_CRED_PSK
-  get_cred/3 [destructor] ,
-  get_cred_from_cert/2 [destructor]
+  make_cert/2,          // make_cert(credI, p_ak) -> certI
+  make_id/3,            // make_id(certI, credR, psk) -> ID_CRED_PSK
+
+  get_cert/3 [destructor],   // extract certI from ID_CRED_PSK
+  get_cred/1 [destructor],   // extract credI from cert
+  get_pak/1  [destructor]    // extract p_ak from cert
 
 equations:
   aeaddec(aeadenc(m,k,r,ad),k,r,ad) = m,
   decxor(encxor(m,k),k) = m,
-  get_cred(make_id(make_cert(credI, p_at), credR, psk), psk, credR) = credI,
-  get_pk_attkey(make_id(make_cert(credI, p_at), credR, psk), psk, credR) = p_at,
-  get_cred_from_cert(make_cert(cred, p_at), p_at) = cred,
+  get_cert(make_id(certI, credR, psk), psk, credR) = certI,
+  get_cred(make_cert(cred, p_ak)) = cred,
+  get_pak(make_cert(cred, p_ak)) = p_ak,
 
 #include "Headers.splib"
 
 heuristic:s
 
 /* -------------------- Initiator -------------------- */
-let I(~cid, method, certI, ~psk, ~ak, ~credR) =
+let I(~cid, method, certI, ~psk, ~ak, ~credR, ~measurement) =
   in(<suitesI,C_I,EAD_1>);
   event MethodOk(method);
 
-  let CRED_I = get_cred_from_cert(certI, pk(~ak)) in   // certI = make_cred(credI, p_at)
+  let CRED_I = get_cred(certI) in   // certI = make_cred(credI, p_at)
   let CRED_R = ~credR in
   let ID_CRED_PSK = make_id(certI, CRED_R, ~psk) in
 
@@ -99,8 +102,7 @@ let I(~cid, method, certI, ~psk, ~ak, ~credR) =
         let ad_3 = <'Encrypt0','empty',external_aad_3> in
 
         // Construction of EAD_3
-        new ~measurement_I;
-        let measurement_hash = hash(~measurement_I) in
+        let measurement_hash = hash(~measurement) in
         let signature = sign(<'Signature1',CRED_I, nonce, measurement_hash>, ~ak) in
         let EAD_3 = <CRED_I, nonce, measurement_hash, signature> in
 
@@ -138,8 +140,9 @@ let I(~cid, method, certI, ~psk, ~ak, ~credR) =
   )
 
 /* -------------------- Responder -------------------- */
-let R(~cid, ~credR, ~psk, ~measurement) =
-  in(<C_R,EAD_2,suitesR>);
+let R(~cid, ~credR, ~psk, measurement_hash) =
+  // in(<C_R,EAD_2,suitesR>);
+  in(<C_R,suitesR>);
   in(m1);
   let <method,suitesI,G_X,C_I,EAD_1> = m1 in
   event MethodOk(method);
@@ -186,10 +189,10 @@ let R(~cid, ~credR, ~psk, ~measurement) =
       let plaintext_3a = decxor(m3, KEYSTREAM_3) in
       let <ID_CRED_PSK_in, ciphertext_3b> = plaintext_3a in
 
-      let CRED_I = get_cred(ID_CRED_PSK_in, ~psk, CRED_R) in
-      let pk_attkey = get_pk_attkey(ID_CRED_PSK_in, ~psk, CRED_R) in
+      let CERT_I = get_cert(ID_CRED_PSK_in, ~psk, CRED_R) in
+      let CRED_I = get_cred(CERT_I) in
+      let pk_attkey = get_pak(CERT_I) in
 
-      
       if CRED_I = CRED_R then (
         0
       ) else
@@ -212,7 +215,7 @@ let R(~cid, ~credR, ~psk, ~measurement) =
           event VerifiedSignature(~cid, CRED_I_in, CRED_R, signature, ~psk);
           if ~nonce = nonce_in then (
             event VerifiedNonce(~cid, CRED_I, CRED_R, nonce_in, ~psk);
-            if measurement_hash_in = ~measurement then (
+            if measurement_hash_in = measurement_hash then (
               event VerifiedMeasurementHash(~cid, CRED_I_in, CRED_R ,measurement_hash_in, ~psk);
               event AttestationAccepted(~cid, CRED_I_in, CRED_R, nonce_in, measurement_hash_in, signature, ~psk);
               0
@@ -269,15 +272,16 @@ process:
 
     new ~ak;
     let certI = make_cert(~credI, pk(~ak)) in 
-    out(certI);
+    out(certI); 
 
-    new ~measurement;
     !(
       new ~cid;
+      new ~measurement;
+      let measurement_hash = hash(~measurement) in 
       ( 
-        (!I(~cid, method_four(), certI, ~psk, ~ak, ~credR))
+        (!I(~cid, method_four(), certI, ~psk, ~ak, ~credR, ~measurement))
         |
-        (!R(~cid, ~credR, ~psk, ~measurement))
+        (!R(~cid, ~credR, ~psk, measurement_hash))
         |
         (compromise(~psk))
       )
@@ -287,6 +291,6 @@ process:
 
 
 
-#include "AttPropertiesPSK.splib"
+#include "LAKERAPropertiesPSK.splib"
 
 end
