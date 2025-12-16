@@ -87,9 +87,6 @@ reduc forall cred:bitstring, p_ak:bitstring;   get_cred(make_cert(cred, p_ak)) =
 reduc forall cred:bitstring, p_ak:bitstring;   get_pak(make_cert(cred, p_ak)) = p_ak.
 reduc forall k:bitstring, m:bitstring;   decxor(encxor(m, k), k) = m.
 reduc forall x:bitstring, y:bitstring;   DL(x, y) = x.
-axiom k:bitstring; event(eShare( k )) && attacker( k ) ==> event(eLeakShare(k)).
-set preciseActions=true.
-
 (*exists_acceptI*)
 query ak:bitstring, cid:bitstring, credI:bitstring, credR:bitstring,
       gy:bitstring, m:bitstring, prk:bitstring, psk:bitstring, x:bitstring,
@@ -197,14 +194,19 @@ query cid1:bitstring, cid2:bitstring, credI1:bitstring, credI2:bitstring,
 query ak:bitstring, cid:bitstring, cid1:bitstring, cid2:bitstring,
       credI:bitstring, credR:bitstring, gx:bitstring, gy:bitstring,
       m:bitstring, prk:bitstring, psk:bitstring, sig:bitstring, x:bitstring,
-      y:bitstring, c:time, i:time, j:time, t:time;
+      y:bitstring, c:time, i:time, j:time, l:time, t:time;
  ((event(eAcceptI( cid1, m, credI, credR, prk, x, gy, psk, ak ))@i) &&
   (event(eAcceptR( cid2, m, credI, credR, prk, gx, y, psk ))@j)) ==>
- ((event(eVerifiedSignature( cid1, credI, credR, sig, psk ))@t) ||
-  ((event(eLeakAttKey( ak ))@t) && (event(eCompromise( psk ))@c)))
+ (((event(eVerifiedSignature( cid1, credI, credR, sig, psk ))@t) ||
+   (((event(eLeakAttKey( ak ))@t) && (event(eCompromise( psk ))@c)) &&
+    (event(eLeakShare( x ))@l))) ||
+  (((event(eLeakAttKey( ak ))@t) && (event(eCompromise( psk ))@c)) &&
+   (event(eLeakShare( y ))@l)))
 .
 let CompromiseShare(s_2:bitstring)=
-    event eLeakShare( snull ).
+    event eLeakShare( s_2 );
+    event eLeakShare( exp(g, s_2) );
+    out(att,s_2).
 let leakSKey(key_2:bitstring)=
     event eLeakSessionKey( snull ).
 let I(cid_2:bitstring, method_2:bitstring, certI_2:bitstring,
@@ -548,6 +550,14 @@ Inexistant lemma actions
   but no rule has such an action.
   
   lemma `AttestationEvidenceIntegirty' references action 
+    fact "LeakShare" (arity 1, Linear) 
+  but no rule has such an action.
+  
+  lemma `AttestationEvidenceIntegirty' references action 
+    fact "LeakShare" (arity 1, Linear) 
+  but no rule has such an action.
+  
+  lemma `AttestationEvidenceIntegirty' references action 
     fact "VerifiedSignature" (arity 5, Linear) 
   but no rule has such an action.
 
@@ -608,9 +618,14 @@ Inexistant lemma actions
       "∀ cid1 cid2 m credI credR prk x gx y gy psk ak #i #j.
         ((AcceptI( cid1, m, credI, credR, prk, x, gy, psk, ak ) @ #i) ∧
          (AcceptR( cid2, m, credI, credR, prk, gx, y, psk ) @ #j)) ⇒
-        ((∃ cid sig #t.
-           VerifiedSignature( cid1, credI, credR, sig, psk ) @ #t) ∨
-         (∃ #t #c. (LeakAttKey( ak ) @ #t) ∧ (Compromise( psk ) @ #c)))"
+        (((∃ cid sig #t.
+            VerifiedSignature( cid1, credI, credR, sig, psk ) @ #t) ∨
+          (∃ #t #c #l.
+            ((LeakAttKey( ak ) @ #t) ∧ (Compromise( psk ) @ #c)) ∧
+            (LeakShare( x ) @ #l))) ∨
+         (∃ #t #c #l.
+           ((LeakAttKey( ak ) @ #t) ∧ (Compromise( psk ) @ #c)) ∧
+           (LeakShare( y ) @ #l)))"
 *)
 
 (*
@@ -739,6 +754,14 @@ Inexistant lemma actions
   but no rule has such an action.
   
   lemma `AttestationEvidenceIntegirty' references action 
+    fact "LeakShare" (arity 1, Linear) 
+  but no rule has such an action.
+  
+  lemma `AttestationEvidenceIntegirty' references action 
+    fact "LeakShare" (arity 1, Linear) 
+  but no rule has such an action.
+  
+  lemma `AttestationEvidenceIntegirty' references action 
     fact "VerifiedSignature" (arity 5, Linear) 
   but no rule has such an action.
 
@@ -799,9 +822,14 @@ Inexistant lemma actions
       "∀ cid1 cid2 m credI credR prk x gx y gy psk ak #i #j.
         ((AcceptI( cid1, m, credI, credR, prk, x, gy, psk, ak ) @ #i) ∧
          (AcceptR( cid2, m, credI, credR, prk, gx, y, psk ) @ #j)) ⇒
-        ((∃ cid sig #t.
-           VerifiedSignature( cid1, credI, credR, sig, psk ) @ #t) ∨
-         (∃ #t #c. (LeakAttKey( ak ) @ #t) ∧ (Compromise( psk ) @ #c)))"
+        (((∃ cid sig #t.
+            VerifiedSignature( cid1, credI, credR, sig, psk ) @ #t) ∨
+          (∃ #t #c #l.
+            ((LeakAttKey( ak ) @ #t) ∧ (Compromise( psk ) @ #c)) ∧
+            (LeakShare( x ) @ #l))) ∨
+         (∃ #t #c #l.
+           ((LeakAttKey( ak ) @ #t) ∧ (Compromise( psk ) @ #c)) ∧
+           (LeakShare( y ) @ #l)))"
 *)
 
 (*
