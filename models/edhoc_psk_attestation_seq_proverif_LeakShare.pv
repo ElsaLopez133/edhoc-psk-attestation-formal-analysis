@@ -70,6 +70,7 @@ event eRespondWithID(bitstring).
 event eSendIData(bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,bitstring).
 event eSendIm3(bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,bitstring).
 event eSendRData(bitstring,bitstring,bitstring,bitstring,bitstring).
+event eSessionR(bitstring,bitstring,bitstring,bitstring,bitstring).
 event eShare(bitstring).
 event eSharePSK(bitstring).
 event eStartI(bitstring,bitstring,bitstring,bitstring,bitstring).
@@ -119,6 +120,30 @@ query ak:bitstring, cid:bitstring, cidR:bitstring, credI:bitstring,
  (((event(eAcceptR( cidR, m, credI, credR, prk, gx, y, psk, gxy ))@t) &&
    (t < i)) ||
   (event(eCompromise( psk ))@t))
+.
+(*InjectiveAgreementRI*)
+query cid1:bitstring, cid2:bitstring, credI:bitstring, credR:bitstring, 
+      gxy1:bitstring, gxy2:bitstring,
+      gx1:bitstring, gx2:bitstring, y1:bitstring, y2:bitstring,
+      psk:bitstring, prk:bitstring, m:bitstring,
+      i:time, j:time, t:time;
+ ((event(eAcceptR( cid1, m, credI, credR, prk, gx1, y1, psk, gxy1))@i) &&
+  (event(eAcceptR( cid2, m, credI, credR, prk, gx2, y2, psk, gxy2))@j)) ==>
+ (i = j) 
+ ||
+ (event(eCompromise( psk ))@t)
+.
+(*InjectiveAgreementIR*)
+query cid1:bitstring, cid2:bitstring, credI:bitstring, credR:bitstring, 
+      gxy1:bitstring, gxy2:bitstring, ak1:bitstring, ak2:bitstring,
+      x1:bitstring, x2:bitstring, gy1:bitstring, gy2:bitstring,
+      psk:bitstring, prk:bitstring, m:bitstring,
+      i:time, j:time, t:time;
+ ((event(eAcceptI( cid1, m, credI, credR, prk, x1, gy1, psk, ak1, gxy1))@i) &&
+  (event(eAcceptI( cid2, m, credI, credR, prk, x2, gy2, psk, ak2, gxy2))@j)) ==>
+ (i = j) 
+ ||
+ (event(eCompromise( psk ))@t)
 .
 (*AttestationEvidenceFreshnessv1*)
 query cid1:bitstring, cid2:bitstring, credI1:bitstring, credI2:bitstring,
@@ -335,6 +360,7 @@ let R(cid_2:bitstring, credR_2:bitstring, psk_2:bitstring,
                                event eAcceptR( cid_2, method_2, CRED_I_2, CRED_R_2, PRK_out_5, G_X_2,
                                                Y_2, psk_2, G_XY_2
                                      );
+                               event eSessionR( cid_2, CRED_I_2, CRED_R_2, PRK_out_5, G_XY_2 );
                                event eAcceptRData( PRK_out_5, method_2, CRED_I_2, CRED_R_2, psk_2, Y_2,
                                                    G_X_2,
                                                    (TH_2_2, (TH_3_2, (TH_4_5, (suitesI_2, (EAD_1_2, (EAD_2_2, (EAD_3_2, (m1_2, (plaintext_2_2, plaintext_3a_2)))))))))
@@ -358,6 +384,7 @@ let R(cid_2:bitstring, credR_2:bitstring, psk_2:bitstring,
                                event eAcceptR( cid_2, method_2, CRED_I_2, CRED_R_2, PRK_out_6, G_X_2,
                                                Y_2, psk_2, G_XY_2
                                      );
+                               event eSessionR( cid_2, CRED_I_2, CRED_R_2, PRK_out_6, G_XY_2 );
                                event eAcceptRData( PRK_out_6, method_2, CRED_I_2, CRED_R_2, psk_2, Y_2,
                                                    G_X_2,
                                                    (TH_2_2, (TH_3_2, (TH_4_6, (suitesI_2, (EAD_1_2, (EAD_2_2, (EAD_3_2, (m1_2, (plaintext_2_2, plaintext_3a_2)))))))))
@@ -380,6 +407,7 @@ let R(cid_2:bitstring, credR_2:bitstring, psk_2:bitstring,
                           event eAcceptR( cid_2, method_2, CRED_I_2, CRED_R_2, PRK_out_7, G_X_2,
                                           Y_2, psk_2, G_XY_2
                                 );
+                          event eSessionR( cid_2, CRED_I_2, CRED_R_2, PRK_out_7, G_XY_2 );
                           event eAcceptRData( PRK_out_7, method_2, CRED_I_2, CRED_R_2, psk_2, Y_2,
                                               G_X_2,
                                               (TH_2_2, (TH_3_2, (TH_4_7, (suitesI_2, (EAD_1_2, (EAD_2_2, (EAD_3_2, (m1_2, (plaintext_2_2, plaintext_3a_2)))))))))
@@ -403,6 +431,7 @@ let R(cid_2:bitstring, credR_2:bitstring, psk_2:bitstring,
                      event eAcceptR( cid_2, method_2, CRED_I_2, CRED_R_2, PRK_out_8, G_X_2,
                                      Y_2, psk_2, G_XY_2
                            );
+                     event eSessionR( cid_2, CRED_I_2, CRED_R_2, PRK_out_8, G_XY_2 );
                      event eAcceptRData( PRK_out_8, method_2, CRED_I_2, CRED_R_2, psk_2, Y_2,
                                          G_X_2,
                                          (TH_2_2, (TH_3_2, (TH_4_8, (suitesI_2, (EAD_1_2, (EAD_2_2, (EAD_3_2, (m1_2, (plaintext_2_2, plaintext_3a_2)))))))))
@@ -502,6 +531,46 @@ Inexistant lemma actions
     fact "HonestSubject" (arity 1, Linear) 
   but no rule has such an action.
   
+  lemma `InjectiveAgreementRI' references action 
+    fact "AcceptR" (arity 9, Linear) 
+  but no rule has such an action.
+  
+  lemma `InjectiveAgreementRI' references action 
+    fact "AcceptR" (arity 9, Linear) 
+  but no rule has such an action.
+  
+  lemma `InjectiveAgreementRI' references action 
+    fact "Compromise" (arity 1, Linear) 
+  but no rule has such an action.
+  
+  lemma `InjectiveAgreementRI' references action 
+    fact "Honest" (arity 1, Linear) 
+  but no rule has such an action.
+  
+  lemma `InjectiveAgreementRI' references action 
+    fact "HonestSubject" (arity 1, Linear) 
+  but no rule has such an action.
+  
+  lemma `InjectiveAgreementIR' references action 
+    fact "AcceptI" (arity 10, Linear) 
+  but no rule has such an action.
+  
+  lemma `InjectiveAgreementIR' references action 
+    fact "AcceptI" (arity 10, Linear) 
+  but no rule has such an action.
+  
+  lemma `InjectiveAgreementIR' references action 
+    fact "Compromise" (arity 1, Linear) 
+  but no rule has such an action.
+  
+  lemma `InjectiveAgreementIR' references action 
+    fact "Honest" (arity 1, Linear) 
+  but no rule has such an action.
+  
+  lemma `InjectiveAgreementIR' references action 
+    fact "HonestSubject" (arity 1, Linear) 
+  but no rule has such an action.
+  
   lemma `AttestationEvidenceFreshnessv1' references action 
     fact "AttestationAcceptedR" (arity 10, Linear) 
   but no rule has such an action.
@@ -541,6 +610,18 @@ Inexistant lemma actions
   lemma `AttestationEvidenceIntegrity' references action 
     fact "VerifiedSignatureR" (arity 7, Linear) 
   but no rule has such an action.
+
+Formula terms
+=============
+
+  lemma `InjectiveAgreementIR' uses terms of the wrong form:
+    `Free ak1', `Free ak2'
+  
+  The only allowed terms are public names and bound node and message
+  variables. If you encounter free message variables, then you might
+  have forgotten a #-prefix. Sort prefixes can only be dropped where
+  this is unambiguous. Moreover, reducible function symbols are
+  disallowed.
 
  Formula guardedness
 ====================
@@ -641,6 +722,46 @@ Inexistant lemma actions
     fact "HonestSubject" (arity 1, Linear) 
   but no rule has such an action.
   
+  lemma `InjectiveAgreementRI' references action 
+    fact "AcceptR" (arity 9, Linear) 
+  but no rule has such an action.
+  
+  lemma `InjectiveAgreementRI' references action 
+    fact "AcceptR" (arity 9, Linear) 
+  but no rule has such an action.
+  
+  lemma `InjectiveAgreementRI' references action 
+    fact "Compromise" (arity 1, Linear) 
+  but no rule has such an action.
+  
+  lemma `InjectiveAgreementRI' references action 
+    fact "Honest" (arity 1, Linear) 
+  but no rule has such an action.
+  
+  lemma `InjectiveAgreementRI' references action 
+    fact "HonestSubject" (arity 1, Linear) 
+  but no rule has such an action.
+  
+  lemma `InjectiveAgreementIR' references action 
+    fact "AcceptI" (arity 10, Linear) 
+  but no rule has such an action.
+  
+  lemma `InjectiveAgreementIR' references action 
+    fact "AcceptI" (arity 10, Linear) 
+  but no rule has such an action.
+  
+  lemma `InjectiveAgreementIR' references action 
+    fact "Compromise" (arity 1, Linear) 
+  but no rule has such an action.
+  
+  lemma `InjectiveAgreementIR' references action 
+    fact "Honest" (arity 1, Linear) 
+  but no rule has such an action.
+  
+  lemma `InjectiveAgreementIR' references action 
+    fact "HonestSubject" (arity 1, Linear) 
+  but no rule has such an action.
+  
   lemma `AttestationEvidenceFreshnessv1' references action 
     fact "AttestationAcceptedR" (arity 10, Linear) 
   but no rule has such an action.
@@ -680,6 +801,18 @@ Inexistant lemma actions
   lemma `AttestationEvidenceIntegrity' references action 
     fact "VerifiedSignatureR" (arity 7, Linear) 
   but no rule has such an action.
+
+Formula terms
+=============
+
+  lemma `InjectiveAgreementIR' uses terms of the wrong form:
+    `Free ak1', `Free ak2'
+  
+  The only allowed terms are public names and bound node and message
+  variables. If you encounter free message variables, then you might
+  have forgotten a #-prefix. Sort prefixes can only be dropped where
+  this is unambiguous. Moreover, reducible function symbols are
+  disallowed.
 
  Formula guardedness
 ====================

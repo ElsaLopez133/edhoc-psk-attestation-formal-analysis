@@ -122,8 +122,8 @@ lemma MutualAuthenticationRI:
    ==> (Ex cidI gy x ak #t. DerivedI(cidI, m, credI, credR, prk, x, gy, psk, ak, gxy)@t & t < i)
     | 
     (Ex #t. Compromise(psk)@t)
-
     "   
+
 // PASSED
 lemma MutualAuthenticationIR:
   "All cid m credI  credR  prk x  gy psk ak gxy #i #j #k #l.
@@ -138,6 +138,39 @@ lemma MutualAuthenticationIR:
     | 
     (Ex #t. Compromise(psk)@t)
     "   
+
+// Injectivity of the Agreement from Responder to Initiator
+
+lemma InjectiveAgreementRI:
+  "All cid1 cid2 m credI credR prk gx1 gx2 y1 y2 psk gxy1 gxy2 #i #j #k #l.
+     AcceptR(cid1, m, credI, credR, prk, gx1, y1, psk, gxy1)@i
+     &
+     AcceptR(cid2, m, credI, credR, prk, gx2, y2, psk, gxy2)@j
+     &
+     Honest(psk)@k
+     &
+     HonestSubject(credR)@l
+   ==> 
+    (#i = #j)
+    | 
+    (Ex #t. Compromise(psk)@t)
+    "
+
+lemma InjectiveAgreementIR:
+  "All cid1 cid2 m credI credR prk x1 x2 gy1 gy2 psk gxy1 gxy2 #i #j #k #l.
+     AcceptI(cid1, m, credI, credR, prk, x1, gy1, psk, ak1, gxy1)@i
+     &
+     AcceptI(cid2, m, credI, credR, prk, x2, gy2, psk, ak2, gxy2)@j
+     &
+     Honest(psk)@k
+     &
+     HonestSubject(credR)@l
+   ==> 
+    (#i = #j)
+    | 
+    (Ex #t. Compromise(psk)@t)
+    "
+
 
 // ******************************************************************
 // ***************** Attestation ************************************
@@ -178,6 +211,7 @@ lemma AttestationEvidenceIntegrity:
   "
 
 // Channel binding -> Attestation + Authentication
+// TODO
 // lemma AttestationAuthentication:
 // "All cid1 cid2 m credI credR prk x gx y gy psk ak gxy #i #j #l #k #u.
 //     AcceptI(cid1, m, credI, credR, prk, x, gy, psk, ak, gxy)@i
