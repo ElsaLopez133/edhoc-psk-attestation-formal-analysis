@@ -47,7 +47,7 @@ event eAcceptRData(bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,b
 event eAttestationAcceptedR(bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,bitstring).
 event eAttestationGeneratedI(bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,bitstring).
 event eCompromise(bitstring).
-event eDerivedI(bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,bitstring).
+event eDerivedI(bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,bitstring).
 event eDerivedIShared(bitstring).
 event eDerivedR(bitstring,bitstring,bitstring,bitstring,bitstring).
 event eDerivedRShared(bitstring).
@@ -63,7 +63,6 @@ event eLeakEAD(bitstring).
 event eLeakSessionKey(bitstring).
 event eLeakShare(bitstring).
 event eMethodOk(bitstring).
-event eNonceIssued(bitstring,bitstring,bitstring,bitstring).
 event eReceivedRData(bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,bitstring).
 event eReceivedRm3(bitstring,bitstring,bitstring,bitstring,bitstring,bitstring,bitstring).
 event eRespondWithID(bitstring).
@@ -92,35 +91,8 @@ reduc forall x:bitstring, y:bitstring;   DL(x, y) = x.
 set preciseActions=true.
 set simplifyProcess = false.
 set reconstructTrace = false.
-(*MutualAuthenticationRI*)
-query ak:bitstring, cid:bitstring, cidI:bitstring, credI:bitstring,
-      credR:bitstring, gx:bitstring, gxy:bitstring, gy:bitstring, m:bitstring,
-      prk:bitstring, psk:bitstring, x:bitstring, y:bitstring, i:time, j:time,
-      k:time, l:time, t:time;
- ((((event(eAcceptR( cid, m, credI, credR, prk, gx, y, psk, gxy ))@i) &&
-    (event(eHonest( psk ))@j)) &&
-   (event(eHonestSubject( credR ))@k)) &&
-  (event(eHonestSubject( credI ))@l)) ==>
- (((event(eDerivedI( cidI, m, credI, credR, prk, x, gy, psk, ak, gxy
-          ))@t) &&
-   (t < i)) ||
-  (event(eCompromise( psk ))@t))
-.
-(*MutualAuthenticationIR*)
-query ak:bitstring, cid:bitstring, cidR:bitstring, credI:bitstring,
-      credR:bitstring, gx:bitstring, gxy:bitstring, gy:bitstring, m:bitstring,
-      prk:bitstring, psk:bitstring, x:bitstring, y:bitstring, i:time, j:time,
-      k:time, l:time, t:time;
- ((((event(eAcceptI( cid, m, credI, credR, prk, x, gy, psk, ak, gxy
-           ))@i) &&
-    (event(eHonest( psk ))@j)) &&
-   (event(eHonestSubject( credR ))@k)) &&
-  (event(eHonestSubject( credI ))@l)) ==>
- (((event(eAcceptR( cidR, m, credI, credR, prk, gx, y, psk, gxy ))@t) &&
-   (t < i)) ||
-  (event(eCompromise( psk ))@t))
-.
-(*AttestationEvidenceFreshnessv1*)
+
+(*AttestationEvidenceFreshness*)
 query cid1:bitstring, cid2:bitstring, credI1:bitstring, credI2:bitstring,
       credR1:bitstring, credR2:bitstring, gxy1:bitstring, gxy2:bitstring,
       meas1:bitstring, meas2:bitstring, nonce:bitstring, pk_attkey1:bitstring,
@@ -147,10 +119,32 @@ query ak:bitstring, cid:bitstring, credI:bitstring, credR:bitstring,
     (event(eHonestSubject( credI ))@j)) &&
    (event(eHonestSubject( credR ))@l)) &&
   (event(eHonest( psk ))@k)) ==>
- (((event(eVerifiedSignatureR( cid, credI, credR, sig, psk, y, gxy
+ (((event(eAttestationAcceptedR( cid, credI, credR, sig, nonce, meas, psk,
+                                 y, gxy, pk_attkey
           ))@t) ||
    (event(eLeakAttKey( ak ))@t)) ||
   (event(eCompromise( psk ))@t))
+.
+(*AttestationAuthentication*)
+query ak:bitstring, cid:bitstring, cid1:bitstring, cid2:bitstring,
+      credI:bitstring, credR:bitstring, gx:bitstring, gxy:bitstring,
+      gy:bitstring, m:bitstring, meas:bitstring, nonce:bitstring,
+      pk_attkey:bitstring, prk:bitstring, psk:bitstring, sig:bitstring,
+      x:bitstring, y:bitstring, c:time, i:time, j:time, k:time, l:time, t:time,
+      u:time, l_1:time;
+ (((((event(eAcceptI( cid1, m, credI, credR, prk, x, gy, psk, ak, gxy
+            ))@i) &&
+     (event(eAcceptR( cid2, m, credI, credR, prk, gx, y, psk, gxy ))@j)) &&
+    (event(eHonestSubject( credI ))@u)) &&
+   (event(eHonestSubject( credR ))@l)) &&
+  (event(eHonest( psk ))@k)) ==>
+ (((event(eAttestationAcceptedR( cid1, credI, credR, sig, nonce, meas,
+                                 psk, y, gxy, pk_attkey
+          ))@t) ||
+   (((event(eLeakAttKey( ak ))@t) && (event(eCompromise( psk ))@c)) &&
+    (event(eLeakShare( x ))@l_1))) ||
+  (((event(eLeakAttKey( ak ))@t) && (event(eCompromise( psk ))@c)) &&
+   (event(eLeakShare( y ))@l_1)))
 .
 let CompromiseShare(s_2:bitstring)=
     event eLeakShare( s_2 );
@@ -222,7 +216,7 @@ let I(cid_2:bitstring, method_2:bitstring, certI_2:bitstring,
                 let PRK_out_2:bitstring=edhoc_kdf(PRK_4e3m_2, sseven, TH_4_2,
                                                   hash_length) in
                 event eDerivedI( cid_2, method_2, CRED_I_2, CRED_R_2, PRK_out_2, X_2,
-                                 G_Y_2, psk_2, ak_2, G_YX_2
+                                 G_Y_2, psk_2, ak_2
                       );
                 event eExplicitDerivedI( cid_2, method_2, CRED_I_2, CRED_R_2, PRK_out_2,
                                          X_2, G_Y_2, psk_2, G_YX_2
@@ -235,6 +229,7 @@ let I(cid_2:bitstring, method_2:bitstring, certI_2:bitstring,
                                 m3_2
                       );
                 out(att,m3_2);
+                event eTransmitEAD( m3_2, EAD_3_2, PRK_4e3m_2 );
                 ((in(att,m4_2:bitstring);
                   let external_aad_4_2:bitstring=TH_4_2 in
                   let ad_4_2:bitstring=(sEncrypt0, (sempty, external_aad_4_2)) in
@@ -269,7 +264,6 @@ let R(cid_2:bitstring, credR_2:bitstring, psk_2:bitstring,
       let PRK_2e_2:bitstring=hkdfextract(TH_2_2, G_XY_2) in
       let (=method_2)=method_four in 
           (new nonce_2:bitstring;
-           event eNonceIssued( cid_2, CRED_R_2, nonce_2, psk_2 );
            let EAD_2_2:bitstring=nonce_2 in
            let plaintext_2_2:bitstring=(C_R_2, EAD_2_2) in
            let KEYSTREAM_2A_2:bitstring=edhoc_kdf(PRK_2e_2, stzero, TH_2_2,
@@ -444,281 +438,3 @@ process
             (R(cid_2, credR_2, psk_2, measurement_hash_3)))))
        | (compromise(psk_2))))
      | (LeakAttKey(ak_2)))))
-
-(*
-WARNING: the following wellformedness checks failed!
-
-Wellformedness-error in Process
-  Variable bound twice: measurement_hash.
-
-Inexistant lemma actions
-========================
-
-  lemma `MutualAuthenticationRI' references action 
-    fact "AcceptR" (arity 9, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationRI' references action 
-    fact "Compromise" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationRI' references action 
-    fact "DerivedI" (arity 10, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationRI' references action 
-    fact "Honest" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationRI' references action 
-    fact "HonestSubject" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationRI' references action 
-    fact "HonestSubject" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationIR' references action 
-    fact "AcceptI" (arity 10, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationIR' references action 
-    fact "AcceptR" (arity 9, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationIR' references action 
-    fact "Compromise" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationIR' references action 
-    fact "Honest" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationIR' references action 
-    fact "HonestSubject" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationIR' references action 
-    fact "HonestSubject" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `AttestationEvidenceFreshnessv1' references action 
-    fact "AttestationAcceptedR" (arity 10, Linear) 
-  but no rule has such an action.
-  
-  lemma `AttestationEvidenceFreshnessv1' references action 
-    fact "AttestationAcceptedR" (arity 10, Linear) 
-  but no rule has such an action.
-  
-  lemma `AttestationEvidenceIntegrity' references action 
-    fact "AcceptR" (arity 9, Linear) 
-  but no rule has such an action.
-  
-  lemma `AttestationEvidenceIntegrity' references action 
-    fact "AttestationGeneratedI" (arity 10, Linear) 
-  but no rule has such an action.
-  
-  lemma `AttestationEvidenceIntegrity' references action 
-    fact "Compromise" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `AttestationEvidenceIntegrity' references action 
-    fact "Honest" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `AttestationEvidenceIntegrity' references action 
-    fact "HonestSubject" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `AttestationEvidenceIntegrity' references action 
-    fact "HonestSubject" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `AttestationEvidenceIntegrity' references action 
-    fact "LeakAttKey" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `AttestationEvidenceIntegrity' references action 
-    fact "VerifiedSignatureR" (arity 7, Linear) 
-  but no rule has such an action.
-
- Formula guardedness
-====================
-
-  lemma `AttestationEvidenceIntegrity' cannot be converted to a guarded formula:
-    unguarded variable(s) 'pk_attkey', '#u' in the subformula
-      "∀ m credI credR nonce meas sig cid psk ak x y gx gxy pk_attkey prk
-         #i #j #k #l #u #n.
-        (((((AttestationGeneratedI( cid, credI, credR, nonce, meas, sig,
-                                    psk, ak, x, gxy
-             ) @ #i) ∧
-            (AcceptR( cid, m, credI, credR, prk, gx, y, psk, gxy ) @ #n)) ∧
-           (HonestSubject( credI ) @ #j)) ∧
-          (HonestSubject( credR ) @ #l)) ∧
-         (Honest( psk ) @ #k)) ⇒
-        (((∃ #t.
-            VerifiedSignatureR( cid, credI, credR, sig, psk, y, gxy ) @ #t) ∨
-          (∃ #t. LeakAttKey( ak ) @ #t)) ∨
-         (∃ #t. Compromise( psk ) @ #t))"
-    in the formula
-      "∀ m credI credR nonce meas sig cid psk ak x y gx gxy pk_attkey prk
-         #i #j #k #l #u #n.
-        (((((AttestationGeneratedI( cid, credI, credR, nonce, meas, sig,
-                                    psk, ak, x, gxy
-             ) @ #i) ∧
-            (AcceptR( cid, m, credI, credR, prk, gx, y, psk, gxy ) @ #n)) ∧
-           (HonestSubject( credI ) @ #j)) ∧
-          (HonestSubject( credR ) @ #l)) ∧
-         (Honest( psk ) @ #k)) ⇒
-        (((∃ #t.
-            VerifiedSignatureR( cid, credI, credR, sig, psk, y, gxy ) @ #t) ∨
-          (∃ #t. LeakAttKey( ak ) @ #t)) ∨
-         (∃ #t. Compromise( psk ) @ #t))"
-*)
-
-(*
-Generated from:
-Tamarin version 1.10.0
-Maude version 2.7.1
-Git revision: UNKNOWN, branch: UNKNOWN
-Compiled at: 2024-10-30 14:56:23.355649243 UTC
-*)
-
-(*
-WARNING: the following wellformedness checks failed!
-
-Wellformedness-error in Process
-  Variable bound twice: measurement_hash.
-
-Inexistant lemma actions
-========================
-
-  lemma `MutualAuthenticationRI' references action 
-    fact "AcceptR" (arity 9, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationRI' references action 
-    fact "Compromise" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationRI' references action 
-    fact "DerivedI" (arity 10, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationRI' references action 
-    fact "Honest" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationRI' references action 
-    fact "HonestSubject" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationRI' references action 
-    fact "HonestSubject" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationIR' references action 
-    fact "AcceptI" (arity 10, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationIR' references action 
-    fact "AcceptR" (arity 9, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationIR' references action 
-    fact "Compromise" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationIR' references action 
-    fact "Honest" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationIR' references action 
-    fact "HonestSubject" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `MutualAuthenticationIR' references action 
-    fact "HonestSubject" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `AttestationEvidenceFreshnessv1' references action 
-    fact "AttestationAcceptedR" (arity 10, Linear) 
-  but no rule has such an action.
-  
-  lemma `AttestationEvidenceFreshnessv1' references action 
-    fact "AttestationAcceptedR" (arity 10, Linear) 
-  but no rule has such an action.
-  
-  lemma `AttestationEvidenceIntegrity' references action 
-    fact "AcceptR" (arity 9, Linear) 
-  but no rule has such an action.
-  
-  lemma `AttestationEvidenceIntegrity' references action 
-    fact "AttestationGeneratedI" (arity 10, Linear) 
-  but no rule has such an action.
-  
-  lemma `AttestationEvidenceIntegrity' references action 
-    fact "Compromise" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `AttestationEvidenceIntegrity' references action 
-    fact "Honest" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `AttestationEvidenceIntegrity' references action 
-    fact "HonestSubject" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `AttestationEvidenceIntegrity' references action 
-    fact "HonestSubject" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `AttestationEvidenceIntegrity' references action 
-    fact "LeakAttKey" (arity 1, Linear) 
-  but no rule has such an action.
-  
-  lemma `AttestationEvidenceIntegrity' references action 
-    fact "VerifiedSignatureR" (arity 7, Linear) 
-  but no rule has such an action.
-
- Formula guardedness
-====================
-
-  lemma `AttestationEvidenceIntegrity' cannot be converted to a guarded formula:
-    unguarded variable(s) 'pk_attkey', '#u' in the subformula
-      "∀ m credI credR nonce meas sig cid psk ak x y gx gxy pk_attkey prk
-         #i #j #k #l #u #n.
-        (((((AttestationGeneratedI( cid, credI, credR, nonce, meas, sig,
-                                    psk, ak, x, gxy
-             ) @ #i) ∧
-            (AcceptR( cid, m, credI, credR, prk, gx, y, psk, gxy ) @ #n)) ∧
-           (HonestSubject( credI ) @ #j)) ∧
-          (HonestSubject( credR ) @ #l)) ∧
-         (Honest( psk ) @ #k)) ⇒
-        (((∃ #t.
-            VerifiedSignatureR( cid, credI, credR, sig, psk, y, gxy ) @ #t) ∨
-          (∃ #t. LeakAttKey( ak ) @ #t)) ∨
-         (∃ #t. Compromise( psk ) @ #t))"
-    in the formula
-      "∀ m credI credR nonce meas sig cid psk ak x y gx gxy pk_attkey prk
-         #i #j #k #l #u #n.
-        (((((AttestationGeneratedI( cid, credI, credR, nonce, meas, sig,
-                                    psk, ak, x, gxy
-             ) @ #i) ∧
-            (AcceptR( cid, m, credI, credR, prk, gx, y, psk, gxy ) @ #n)) ∧
-           (HonestSubject( credI ) @ #j)) ∧
-          (HonestSubject( credR ) @ #l)) ∧
-         (Honest( psk ) @ #k)) ⇒
-        (((∃ #t.
-            VerifiedSignatureR( cid, credI, credR, sig, psk, y, gxy ) @ #t) ∨
-          (∃ #t. LeakAttKey( ak ) @ #t)) ∨
-         (∃ #t. Compromise( psk ) @ #t))"
-*)
-
-(*
-Generated from:
-Tamarin version 1.10.0
-Maude version 2.7.1
-Git revision: UNKNOWN, branch: UNKNOWN
-Compiled at: 2024-10-30 14:56:23.355649243 UTC
-*)

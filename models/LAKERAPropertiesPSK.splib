@@ -43,23 +43,6 @@
 //   "Ex cid  credR psk #t.
 //     StartR(cid, credR, psk) @ t"
 
-// lemma exists_VerifiedSignature:
-//   exists-trace
-//   "Ex cid credI credR psk signature #t.
-//     VerifiedSignatureR(cid, credI, credR, signature, psk) @ t"
-
-// lemma exists_FailedSignature:
-//   exists-trace
-//   "Ex cid credI credR psk signature #t.
-//     FailedSignatureR(cid, credI, credR, signature, psk) @ t"
-
-
-// lemma exists_VerifiedNonce:
-//   exists-trace
-//   "Ex cid credI credR psk nonce #t.
-//     VerifiedNonceR(cid, credI, credR, nonce, psk) @ t"
-
-
 // ******************************************************************
 // ****Full Agreement: Authentication and key confirmation***********
 // ******************************************************************
@@ -75,15 +58,22 @@
 // have enageged in a session, unless the PSK or subjects were leaked
 // If this happens, then the attacker could play the role of I and there would not
 // be an Initiator running in the session.
+
 // lemma full_agreement_RI:
-//   "All cid1 cid2 m credI1 credI2 credR1 credR2 prk gx1 gx2 y1 y2 psk ak #i #j #k #l #c.
-//      AcceptR(cid1, m, credI1, credR1, prk, gx1, y1, psk)@i
-//      & AcceptR(cid2, m, credI2, credR2, prk, gx2, y2, psk)@j
-//      & Honest(psk)@k & HonestSubject(credI1)@l & HonestSubject(credI2)@c
-//    ==> (Ex cid credI credR x gy prk #t.
-//           DerivedI(cid, m, credI, credR, prk, x, gy, psk, ak)@t & t < i & t < j 
+//   "All cid1 cid2 m credI1 credI2 credR1 credR2 prk gx1 gx2 y1 y2 psk ak gxy1 gxy2 #i #j #k #l #c.
+//      AcceptR(cid1, m, credI1, credR1, prk, gx1, y1, psk, gxy1)@i
+//      & 
+//      AcceptR(cid2, m, credI2, credR2, prk, gx2, y2, psk, gxy2)@j
+//      & 
+//      Honest(psk)@k 
+//      & 
+//      HonestSubject(credI1)@l 
+//      &
+//      HonestSubject(credI2)@c
+//    ==> (Ex cid credI credR x gy prk gxy #t.
+//           DerivedI(cid, m, credI, credR, prk, x, gy, psk, ak, gxy)@t & t < i & t < j 
 //           & cid1 = cid2 & gx1 = gx2 & y1 = y2 & credI1 = credI2 & credR1 = credR2 
-//           & credI = credI1 & credR = credR1 & #i = #j)
+//           & credI = credI1 & credR = credR1 & gxy1 = gxy2 & gxy1 = gxy & #i = #j)
 //     | 
 //     (Ex #t. Compromise(psk)@t & t < j)
 //     "     
@@ -95,36 +85,78 @@
 // a session as a Repsonder
 
 // lemma full_agreement_IR:
-//   "All cid1 cid2 m credI1 credI2 credR1 credR2 prk x1 x2 gy1 gy2 psk ak1 ak2 #i #j #k #l #c.
-//      AcceptI(cid1, m, credI1, credR1, prk, x1, gy1, psk, ak1)@i
-//      & AcceptI(cid2, m, credI2, credR2, prk, x2, gy2, psk, ak2)@j
-//      & Honest(psk)@k &HonestSubject(credR1)@l & HonestSubject(credR2)@c
-//    ==> (Ex cid credI credR gx y prk #t.
-//           AcceptR(cid, m, credI, credR, prk, gx, y, psk)@t & t < i & t < j 
+//   "All cid1 cid2 m credI1 credI2 credR1 credR2 prk x1 x2 gy1 gy2 psk ak1 ak2 gxy1 gxy2 #i #j #k #l #c.
+//      AcceptI(cid1, m, credI1, credR1, prk, x1, gy1, psk, ak1, gxy1)@i
+//      & 
+//      AcceptI(cid2, m, credI2, credR2, prk, x2, gy2, psk, ak2, gxy2)@j
+//      & 
+//      Honest(psk)@k 
+//      &
+//      HonestSubject(credR1)@l 
+//      & 
+//      HonestSubject(credR2)@c
+//    ==> (Ex cid credI credR gx y prk gxy #t.
+//           AcceptR(cid, m, credI, credR, prk, gx, y, psk, gxy)@t & t < i & t < j 
 //           & cid1 = cid2 & x1 = x2 & gy1 = gy2 & credI1 = credI2 & credR1 = credR2 
-//           & credI = credI1 & credR = credR1 & ak1 = ak2 & #i = #j)
+//           & credI = credI1 & credR = credR1 & ak1 = ak2 & gxy1 = gxy2 & gxy1 = gxy & #i = #j)
 //     | 
 //     (Ex #t. Compromise(psk)@t & t < j)
 //     "   
+
+// Mutual Authentication (non-injective)
+// If a Responder accepted a session, i.e., it finished, then there must 
+// be a Initiator that has already derived the same values (same prk), 
+// unless PSK and subjects were leaked, in which case the attacker can forge
+// a session as an Initiator
+
+// PASSED
+lemma MutualAuthenticationRI:
+  "All cid m credI  credR  prk gx y psk gxy #i #j #k #l.
+     AcceptR(cid, m, credI, credR, prk, gx, y, psk, gxy)@i
+     & 
+     Honest(psk)@j 
+     &
+     HonestSubject(credR)@k 
+     &
+     HonestSubject(credI)@l 
+   ==> (Ex cidI gy x ak #t. DerivedI(cidI, m, credI, credR, prk, x, gy, psk, ak, gxy)@t & t < i)
+    | 
+    (Ex #t. Compromise(psk)@t)
+
+    "   
+// PASSED
+lemma MutualAuthenticationIR:
+  "All cid m credI  credR  prk x  gy psk ak gxy #i #j #k #l.
+     AcceptI(cid, m, credI, credR, prk, x, gy, psk, ak, gxy)@i
+     & 
+     Honest(psk)@j 
+     &
+     HonestSubject(credR)@k 
+     &
+     HonestSubject(credI)@l 
+   ==> (Ex cidR y gx #t. AcceptR(cidR, m, credI, credR, prk, gx, y, psk, gxy)@t & t < i)
+    | 
+    (Ex #t. Compromise(psk)@t)
+    "   
 
 // ******************************************************************
 // ***************** Attestation ************************************
 // ******************************************************************
 
-// // Attestation freshness
-// lemma AttestationEvidenceFreshness:
-//   "All credI1 credI2 credR1 credR2 nonce meas1 sig1 meas2 sig2 cid1 cid2 psk y1 y2#i #j.
-//     AttestationAcceptedR(cid1, credI1, credR1, <credI1, nonce, meas1, sig1>, psk, y1) @ i
-//     &
-//     AttestationAcceptedR(cid2, credI2, credR2, <credI2, nonce, meas2, sig2>, psk, y2) @ j
-//   ==> 
-//   (#i = #j)
-//   // |
-//   // (Ex #t. LeakAttKey(ak)@t)
-//   "
+// Attestation freshness 
+// PASSED
+lemma AttestationEvidenceFreshnessv1:
+  "All credI1 credI2 credR1 credR2 nonce meas1 meas2 sig1 sig2 cid1 cid2 psk1 psk2 pk_attkey1 pk_attkey2 y1 y2 gxy1 gxy2 #i #j.
+    AttestationAcceptedR(cid1, credI1, credR1, sig1, nonce, meas1, psk1, y1, gxy1, pk_attkey1)@i
+    &
+    AttestationAcceptedR(cid2, credI2, credR2, sig2, nonce, meas2, psk2, y2, gxy2, pk_attkey2)@j
+  ==> 
+  (#i = #j)
+  "
+
 
 // Attestation integrity -> the evidence is not modified, so signature is correct
-
+// PASSED
 lemma AttestationEvidenceIntegrity:
   "All m credI credR nonce meas sig cid psk ak x y gx gxy pk_attkey prk #i #j #k #l #u #n.
     AttestationGeneratedI(cid, credI, credR, nonce, meas, sig, psk, ak, x, gxy)@i
@@ -137,22 +169,28 @@ lemma AttestationEvidenceIntegrity:
     &
     Honest(psk)@k
   ==> 
-  (Ex #t. AttestationAcceptedR(cid, credI, credR, sig, psk, y, gxy, pk_attkey)@t)
+  // (Ex #t. AttestationAcceptedR(cid, credI, credR, sig, nonce, meas, psk, y, gxy, pk_attkey)@t)
+  (Ex #t. VerifiedSignatureR(cid, credI, credR, sig, psk, y, gxy)@t)
   |
   (Ex #t. LeakAttKey(ak)@t)
-  // |
-  // (Ex #t #c. Compromise(psk)@t & LeakAttKey(ak)@c)
   |
   (Ex #t. Compromise(psk)@t)
   "
 
-// // Attestation + Authentication
-// lemma AttestationEvidenceIntegirty:
-// "All cid1 cid2 m credI credR prk x gx y gy psk ak #i #j.
-//     AcceptI(cid1, m, credI, credR, prk, x, gy, psk, ak)@i
-//     & AcceptR(cid2, m, credI, credR, prk, gx, y, psk)@j 
+// Channel binding -> Attestation + Authentication
+// lemma AttestationAuthentication:
+// "All cid1 cid2 m credI credR prk x gx y gy psk ak gxy #i #j #l #k #u.
+//     AcceptI(cid1, m, credI, credR, prk, x, gy, psk, ak, gxy)@i
+//     & 
+//     AcceptR(cid2, m, credI, credR, prk, gx, y, psk, gxy)@j 
+//     &
+//     HonestSubject(credI)@u
+//     &
+//     HonestSubject(credR)@l
+//     &
+//     Honest(psk)@k
 //   ==>
-//   (Ex cid sig #t. VerifiedSignatureR(cid1, credI, credR, sig, psk, y) @t)
+//   (Ex cid sig pk_attkey nonce meas #t. AttestationAcceptedR(cid1, credI, credR, sig, nonce, meas, psk, y, gxy, pk_attkey) @t)
 //   |
 //   (Ex #t #c #l. LeakAttKey(ak)@t & Compromise(psk)@c &LeakShare(x)@l)
 //   |

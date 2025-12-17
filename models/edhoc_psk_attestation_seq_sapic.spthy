@@ -116,12 +116,12 @@ let I(~cid, method, certI, ~psk, ~ak, ~credR, ~measurement) =
         let K_4 = edhoc_kdf(PRK_4e3m,'eight', TH_4, key_length) in
         let IV_4 = edhoc_kdf(PRK_3e2m,'nine', TH_4, iv_length) in
         let PRK_out = edhoc_kdf(PRK_4e3m,'seven', TH_4, hash_length) in
-        event DerivedI(~cid, method, CRED_I, CRED_R, PRK_out, ~X, G_Y, ~psk, ~ak);
+        event DerivedI(~cid, method, CRED_I, CRED_R, PRK_out, ~X, G_Y, ~psk, ~ak, G_YX);
         event ExplicitDerivedI(~cid, method, CRED_I, CRED_R, PRK_out, ~X, G_Y, ~psk, G_YX);
         event SendIData(PRK_out, method, CRED_I, CRED_R, ~psk,~X,G_Y,<TH_2,TH_3,TH_4,suitesI, EAD_1, EAD_2, EAD_3, m1, plaintext_2, plaintext_3a>);
         event SendIm3(~cid, method, CRED_I, CRED_R, ~psk, ~X, G_Y, m3);
         out(m3);
-        event TransmitEAD(m3, EAD_3, PRK_4e3m);
+        // event TransmitEAD(m3, EAD_3, PRK_4e3m);
       
         ( 
             (
@@ -131,7 +131,7 @@ let I(~cid, method, certI, ~psk, ~ak, ~credR, ~measurement) =
                 let plaintext_4 = aeaddec(m4, K_4, IV_4, ad_4) in
                 let EAD_4 = plaintext_4 in
                 event AcceptIData(PRK_out, method, CRED_I, CRED_R, ~psk,~X,G_Y,<TH_2,TH_3,TH_4,suitesI, EAD_1, EAD_2, EAD_3, m1, plaintext_2, plaintext_3a, plaintext_4>);
-                event AcceptI(~cid, method, CRED_I, CRED_R, PRK_out, ~X, G_Y, ~psk, ~ak);
+                event AcceptI(~cid, method, CRED_I, CRED_R, PRK_out, ~X, G_Y, ~psk, ~ak, G_YX);
                 0
             )
             |
@@ -172,6 +172,7 @@ let R(~cid, ~credR, ~psk, measurement_hash) =
 
     if method = method_four() then (
       new ~nonce;
+      event NonceIssued(~cid, CRED_R, ~nonce, ~psk);
       let EAD_2 = ~nonce in
       let plaintext_2 = <C_R, EAD_2> in
       let KEYSTREAM_2A = edhoc_kdf(PRK_2e,'tzero', TH_2, plaintext_length) in
@@ -217,13 +218,12 @@ let R(~cid, ~credR, ~psk, measurement_hash) =
         
         if verify(signature, <'Signature1',CRED_I_in, nonce_in, measurement_hash_in>, pk_attkey) = true then (
             event VerifiedSignatureR(~cid, CRED_I_in, CRED_R, signature, ~psk, ~Y, G_XY);
-            event AttestationAcceptedR(~cid, CRED_I_in, CRED_R, signature, ~psk, ~Y, G_XY, pk_attkey);
             if ~nonce = nonce_in then (
             event VerifiedNonceR(~cid, CRED_I, CRED_R, nonce_in, ~psk);
                 if measurement_hash_in = measurement_hash then 
                 (
                     event VerifiedMeasurementHashR(~cid, CRED_I_in, CRED_R ,measurement_hash_in, ~psk);
-                    event AttestationAcceptedR(~cid, CRED_I_in, CRED_R, signature, ~psk, ~Y, G_XY, pk_attkey);
+                    event AttestationAcceptedR(~cid, CRED_I_in, CRED_R, signature, nonce_in, measurement_hash_in, ~psk, ~Y, G_XY, pk_attkey);
                     (
                         let TH_4 = hash(<wrap(TH_3), ID_CRED_PSK_in, plaintext_3b, CRED_I, CRED_R>) in
                         let K_4 = edhoc_kdf(PRK_4e3m,'eight', TH_4, key_length) in
@@ -265,7 +265,6 @@ let R(~cid, ~credR, ~psk, measurement_hash) =
                         )
                     )
                 )
-
             ) else (
                 event FailedNonceR(~cid, CRED_I_in, CRED_R, nonce_in, ~psk);
                 (
@@ -288,7 +287,6 @@ let R(~cid, ~credR, ~psk, measurement_hash) =
                     )
                 )
             )
-          
         ) else (
           event FailedSignatureR(~cid, CRED_I_in, CRED_R, signature, ~psk);
           (
@@ -310,9 +308,7 @@ let R(~cid, ~credR, ~psk, measurement_hash) =
                 leakSKey(PRK_out)
             )
           )
-        
         )        
-
     ) else (0)
     )
   )
@@ -342,7 +338,8 @@ process:
     // new ~measurement;
     // let measurement_hash = hash(~measurement) in 
 
-    !(
+    !
+    (
       new ~cid;
       new ~measurement;
       let measurement_hash = hash(~measurement) in 
