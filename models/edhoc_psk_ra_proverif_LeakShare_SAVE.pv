@@ -143,35 +143,37 @@ query cid1:bitstring, cid2:bitstring, credI:bitstring, credR:bitstring,
  ||
  (event(eCompromise( psk ))@t)
 .
-(*AttestationEvidenceFreshnessv1*)
+(*AttestationEvidenceFreshness*)
 query cid1:bitstring, cid2:bitstring, credI1:bitstring, credI2:bitstring,
       credR1:bitstring, credR2:bitstring, gxy1:bitstring, gxy2:bitstring,
       meas1:bitstring, meas2:bitstring, nonce:bitstring, pk_attkey1:bitstring,
       pk_attkey2:bitstring, psk1:bitstring, psk2:bitstring, sig1:bitstring,
-      sig2:bitstring, y1:bitstring, y2:bitstring, i:time, j:time;
- ((event(eAttestationAcceptedR( cid1, credI1, credR1, sig1, nonce, meas1,
-                                psk1, y1, gxy1, pk_attkey1
-         ))@i) &&
-  (event(eAttestationAcceptedR( cid2, credI2, credR2, sig2, nonce, meas2,
-                                psk2, y2, gxy2, pk_attkey2
-         ))@j)) ==>
- (i = j)
+      sig2:bitstring, y1:bitstring, y2:bitstring, i:time, j:time, k:time;
+ (((event(eAttestationAcceptedR( cid1, credI1, credR1, sig1, nonce, meas1,
+                                 psk1, y1, gxy1, pk_attkey1
+          ))@i) &&
+   (event(eAttestationAcceptedR( cid2, credI2, credR2, sig2, nonce, meas2,
+                                 psk2, y2, gxy2, pk_attkey2
+          ))@j)) &&
+  (event(eHonestNonce( nonce ))@k)) ==>
+ ((i = j) && (k < i))
 .
 (*AttestationEvidenceIntegrity*)
-query ak:bitstring, cid:bitstring, credI:bitstring, credR:bitstring,
-      gx:bitstring, gxy:bitstring, m:bitstring, meas:bitstring,
-      nonce:bitstring, pk_attkey:bitstring, prk:bitstring, psk:bitstring,
-      sig:bitstring, x:bitstring, y:bitstring, i:time, j:time, k:time, l:time,
-      n:time, t:time, u:time;
- (((((event(eAttestationGeneratedI( cid, credI, credR, nonce, meas, sig,
-                                    psk, ak, x, gxy
-            ))@i) &&
-     (event(eAcceptR( cid, m, credI, credR, prk, gx, y, psk, gxy ))@n)) &&
+query ak:bitstring, cidI:bitstring, cidR:bitstring, credI:bitstring,
+      credR:bitstring, gx:bitstring, gxy:bitstring, m:bitstring,
+      meas:bitstring, nonce:bitstring, pk_attkey:bitstring, prk:bitstring,
+      psk:bitstring, sig:bitstring, x:bitstring, y:bitstring, i:time, j:time,
+      k:time, l:time, t:time, ak_1:bitstring, x_1:bitstring;
+ ((((event(eVerifiedSignatureR( cidR, credI, credR, nonce, meas, sig, psk,
+                                y, gxy
+           ))@i) &&
     (event(eHonestSubject( credI ))@j)) &&
    (event(eHonestSubject( credR ))@l)) &&
   (event(eHonest( psk ))@k)) ==>
- (((event(eVerifiedSignatureR( cid, credI, credR, sig, psk, y, gxy
-          ))@t) ||
+ ((((event(eAttestationGeneratedI( cidI, credI, credR, nonce, meas, sig,
+                                   psk, ak_1, x_1, gxy
+           ))@t) &&
+    (t < i)) ||
    (event(eLeakAttKey( ak ))@t)) ||
   (event(eCompromise( psk ))@t))
 .

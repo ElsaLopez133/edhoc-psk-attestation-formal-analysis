@@ -172,7 +172,7 @@ let R(~cid, ~credR, ~psk, measurement_hash) =
 
     if method = method_four() then (
       new ~nonce;
-      event NonceIssued(~cid, CRED_R, ~nonce, ~psk);
+      event HonestNonce(~nonce);
       let EAD_2 = ~nonce in
       let plaintext_2 = <C_R, EAD_2> in
       let KEYSTREAM_2A = edhoc_kdf(PRK_2e,'tzero', TH_2, plaintext_length) in
@@ -217,7 +217,7 @@ let R(~cid, ~credR, ~psk, measurement_hash) =
         // let verification = verify(signature, <'Signature1',CRED_I_in, nonce_in, measurement_hash_in>, pk_attkey) in
         
         if verify(signature, <'Signature1',CRED_I_in, nonce_in, measurement_hash_in>, pk_attkey) = true then (
-            event VerifiedSignatureR(~cid, CRED_I_in, CRED_R, signature, ~psk, ~Y, G_XY);
+            event VerifiedSignatureR(~cid, CRED_I_in, CRED_R, nonce_in, measurement_hash_in, signature, ~psk, ~Y, G_XY);
             if ~nonce = nonce_in then (
             event VerifiedNonceR(~cid, CRED_I, CRED_R, nonce_in, ~psk);
                 if measurement_hash_in = measurement_hash then 
@@ -348,9 +348,9 @@ process:
       new ~measurement;
       let measurement_hash = hash(~measurement) in 
       ( 
-        (!I(~cid, method_four(), certI, ~psk, ~ak, ~credR, ~measurement))
+        (I(~cid, method_four(), certI, ~psk, ~ak, ~credR, ~measurement))
         |
-        (!R(~cid, ~credR, ~psk, measurement_hash))
+        (R(~cid, ~credR, ~psk, measurement_hash))
         |
         (compromise(~psk))
         |
