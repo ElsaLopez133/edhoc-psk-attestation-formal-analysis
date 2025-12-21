@@ -71,12 +71,10 @@ lemma InjectiveAgreementRI:
      HonestSubject(credR)@l
    ==> 
     (#i = #j)
-    | 
-    (Ex #t. Compromise(psk)@t)
     "
 
 lemma InjectiveAgreementIR:
-  "All cid1 cid2 m credI credR prk x1 x2 gy1 gy2 psk gxy1 gxy2 #i #j #k #l.
+  "All cid1 cid2 m credI credR prk x1 x2 gy1 gy2 psk gxy1 gxy2 ak1 ak2 #i #j #k #l.
      AcceptI(cid1, m, credI, credR, prk, x1, gy1, psk, ak1, gxy1)@i
      &
      AcceptI(cid2, m, credI, credR, prk, x2, gy2, psk, ak2, gxy2)@j
@@ -86,8 +84,6 @@ lemma InjectiveAgreementIR:
      HonestSubject(credR)@l
    ==> 
     (#i = #j)
-    | 
-    (Ex #t. Compromise(psk)@t)
     "
 
 // ******************************************************************
@@ -129,28 +125,42 @@ lemma AttestationEvidenceIntegrity:
   (Ex #t. Compromise(psk)@t)
   "
 
-
-// Attestation + Authentication
+// Agreement of parameters for attestation and authentication
 // TODO
-// lemma AttestationAuthentication:
-// "All cid1 cid2 m credI credR prk x gx y gy psk ak gxy #i #j #l #k #u.
-//     AcceptI(cid1, m, credI, credR, prk, x, gy, psk, ak, gxy)@i
-//     & 
-//     AcceptR(cid2, m, credI, credR, prk, gx, y, psk, gxy)@j 
-//     &
-//     HonestSubject(credI)@u
-//     &
-//     HonestSubject(credR)@l
-//     &
-//     Honest(psk)@k
-//   ==>
-//   (Ex cid sig pk_attkey nonce meas #t. AttestationAcceptedR(cid1, credI, credR, sig, nonce, meas, psk, y, gxy, pk_attkey) @t)
-//   |
-//   (Ex #t #c #l. LeakAttKey(ak)@t & Compromise(psk)@c &LeakShare(x)@l)
-//   |
-//   (Ex #t #c #l. LeakAttKey(ak)@t & Compromise(psk)@c &LeakShare(y)@l)
-//   "
+lemma AgreementParamaters:
+"All cid1 cid2 m credI credR prk x gx y gy psk gxy ak #i #j #l #k #u.
+    AcceptI(cid1, m, credI, credR, prk, x, gy, psk,ak, gxy)@i
+    & 
+    AcceptR(cid2, m, credI, credR, prk, gx, y, psk, gxy)@j 
+    &
+    HonestSubject(credI)@u
+    &
+    HonestSubject(credR)@l
+    &
+    Honest(psk)@k
+  ==>
+  (Ex cid sig nonce meas pk_attkey #t. AttestationAcceptedR(cid, credI, credR, sig, nonce, meas, psk, y, gxy, pk_attkey) @t)
+  |
+  (Ex #t #c #l. LeakAttKey(ak)@t & Compromise(psk)@c &LeakShare(x)@l)
+  |
+  (Ex #t #c #l. LeakAttKey(ak)@t & Compromise(psk)@c &LeakShare(y)@l)
+  "
 
+// PASSED
+lemma ChannelBinding:
+"All cid m credI credR psk gx y1 y2 prk gxy1 gxy2 pk_attkey sig meas nonce ak #i #j #l #k #u #c.
+    AttestationAcceptedR(cid, credI, credR, sig, nonce, meas, psk, y1, gxy1, pk_attkey)@i 
+    &
+    AcceptR(cid, m, credI, credR, prk, gx, y2, psk, gxy2)@j
+  ==>
+    (Ex cidI gy x ak #t. DerivedI(cidI, m, credI, credR, prk, x, gy, psk, ak, gxy2)@t
+    & t < j
+    & gxy1 = gxy2)
+    |
+    (Ex #t. Compromise(psk)@t )
+    |
+    (Ex #t. LeakAttKey(ak)@t)
+  "
 // ******************************************************************
 // ************** Attacker capabilities *****************************
 // ******************************************************************
