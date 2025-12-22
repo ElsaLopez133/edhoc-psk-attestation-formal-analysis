@@ -128,10 +128,10 @@ lemma AttestationEvidenceIntegrity:
 // Agreement of parameters for attestation and authentication
 // TODO
 lemma AgreementParamaters:
-"All cid1 cid2 m credI credR prk x gx y gy psk gxy ak #i #j #l #k #u.
-    AcceptI(cid1, m, credI, credR, prk, x, gy, psk,ak, gxy)@i
+"All cid m credI credR prk x gx y gy psk gxy ak #i #j #l #k #u.
+    AcceptI(cid, m, credI, credR, prk, x, gy, psk,ak, gxy)@i
     & 
-    AcceptR(cid2, m, credI, credR, prk, gx, y, psk, gxy)@j 
+    AcceptR(cid, m, credI, credR, prk, gx, y, psk, gxy)@j 
     &
     HonestSubject(credI)@u
     &
@@ -139,7 +139,7 @@ lemma AgreementParamaters:
     &
     Honest(psk)@k
   ==>
-  (Ex cid sig nonce meas pk_attkey #t. AttestationAcceptedR(cid, credI, credR, sig, nonce, meas, psk, y, gxy, pk_attkey) @t)
+  (Ex sig nonce meas pk_attkey #t. AttestationAcceptedR(cid, credI, credR, sig, nonce, meas, psk, y, gxy, pk_attkey) @t)
   |
   (Ex #t #c #l. LeakAttKey(ak)@t & Compromise(psk)@c &LeakShare(x)@l)
   |
