@@ -1,0 +1,9 @@
+lemma,status,time_sec
+AgreementParamaters,PASS,27.09
+ChannelBinding,PASS,35.04
+MutualAuthenticationRI,PASS,22.74
+MutualAuthenticationIR,PASS,18.12
+InjectiveAgreementIR,PASS,20.61
+InjectiveAgreementRI,PASS,20.65
+AttestationEvidenceFreshness,PASS,22.13
+AttestationEvidenceIntegrity,PASS,21.91

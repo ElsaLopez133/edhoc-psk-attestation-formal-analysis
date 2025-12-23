@@ -30,23 +30,7 @@ while read -r LEMMA; do
         -DLeakShare \
         -DLeakSKey \
         --prove="$LEMMA" \
-        "$SPTHY" \
-        | awk '
-        /^reduc / { last_reduc = NR }
-        { lines[NR] = $0 }
-        END {
-          for (i = 1; i <= NR; i++) {
-            print lines[i]
-            if (i == last_reduc) {
-              print ""
-              print "set preciseActions = true."
-              print "set simplifyProcess = false."
-              print "set reconstructTrace = false."
-              print ""
-            }
-          }
-        }
-        ' > "$PV_FILE"
+        "$SPTHY" > "$PV_FILE"
 
     # 3. Run ProVerif with timing
     /usr/bin/time -f "%e" \
