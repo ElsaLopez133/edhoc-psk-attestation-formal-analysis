@@ -118,9 +118,8 @@ lemma AttestationEvidenceIntegrity:
     &
     Honest(psk)@k
   ==> 
-  (Ex cidI ak x #t. AttestationGeneratedI(cidI, credI, credR, nonce, meas, sig, psk, ak, x, gxy)@t & t < i)
-  |
-  (Ex #t. LeakAttKey(ak)@t)
+  (Ex cidI ak x #t #c. AttestationGeneratedI(cidI, credI, credR, nonce, meas, sig, psk, ak, x, gxy)@t & t < i
+   & HonestAttKey(ak)@c)
   |
   (Ex #t. Compromise(psk)@t)
   "
@@ -170,19 +169,33 @@ lemma AgreementParamaters:
 //cannot be replayed, spliced, or reused across different sessions, peers, or keys.
 // PASSED
 lemma ChannelBinding:
-"All cid m credI credR psk gx y1 y2 prk gxy1 gxy2 pk_attkey sig meas nonce ak #i #j #l #k #u #c.
-    AttestationAcceptedR(cid, credI, credR, sig, nonce, meas, psk, y1, gxy1, pk_attkey)@i 
+"All cid m credI credR psk gx y gxy prk pk_attkey sig meas nonce ak #i #j #l #k #u #c.
+    AttestationAcceptedR(cid, credI, credR, sig, nonce, meas, psk, y, gxy, pk_attkey)@i 
     &
-    AcceptR(cid, m, credI, credR, prk, gx, y2, psk, gxy2)@j
+    AcceptR(cid, m, credI, credR, prk, gx, y, psk, gxy)@j
   ==>
-    (Ex cidI gy x ak #t. DerivedI(cidI, m, credI, credR, prk, x, gy, psk, ak, gxy2)@t
+    (Ex gy x ak #t #c. DerivedI(cid, m, credI, credR, prk, x, gy, psk, ak, gxy)@t
     & t < j
-    & gxy1 = gxy2)
-    |
-    (Ex #t. Compromise(psk)@t )
-    |
-    (Ex #t. LeakAttKey(ak)@t)
+    & HonestAttKey(ak)@c)
+    // |
+    // (Ex #t. Compromise(psk)@t )
   "
+
+lemma ChannelBinding_attack:
+  exists-trace
+  "Ex cid cidI m credI credR psk x gx y gy prk1 prk2 gxy1 gxy2 gxy pk_attkey ak sig meas nonce #i #j #k #l #n.
+      AttestationAcceptedR(cid, credI, credR, sig, nonce, meas, psk, y, gxy1, pk_attkey)@i
+      &
+      AcceptR(cid, m, credI, credR, prk1, gx, y, psk, gxy1)@j
+      &
+      AcceptI(cidI, m, credI, credR, prk2, x, gy, psk, ak, gxy2)@l
+      &
+      AttestationGeneratedI(cidI, credI, credR, nonce, meas, sig, psk, ak, x, gxy2, pk_attkey)@k
+      &
+      Compromise(psk)@n
+  "
+
+
 // ******************************************************************
 // ************** Attacker capabilities *****************************
 // ******************************************************************
