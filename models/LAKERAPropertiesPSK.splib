@@ -177,8 +177,8 @@ lemma ChannelBinding:
     (Ex gy x ak #t #c. DerivedI(cid, m, credI, credR, prk, x, gy, psk, ak, gxy)@t
     & t < j
     & HonestAttKey(ak)@c)
-    // |
-    // (Ex #t. Compromise(psk)@t )
+    |
+    (Ex #t. Compromise(psk)@t )
   "
 
 lemma ChannelBinding_attack:
