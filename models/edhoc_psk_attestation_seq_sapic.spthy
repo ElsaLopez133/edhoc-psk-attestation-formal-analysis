@@ -120,6 +120,7 @@ let I(~cid, method, certI, ~psk, ~ak, ~credR, ~measurement) =
         event ExplicitDerivedI(~cid, method, CRED_I, CRED_R, PRK_out, ~X, G_Y, ~psk, G_YX);
         event SendIData(PRK_out, method, CRED_I, CRED_R, ~psk,~X,G_Y,<TH_2,TH_3,TH_4,suitesI, EAD_1, EAD_2, EAD_3, m1, plaintext_2, plaintext_3a>);
         event SendIm3(~cid, method, CRED_I, CRED_R, ~psk, ~X, G_Y, m3);
+        event SentByI(~cid, CRED_I, CRED_R, PRK_out, ~psk, G_YX, ~X, nonce, signature, ~ak, pk(~ak));
         out(m3);
         // event TransmitEAD(m3, EAD_3, PRK_4e3m);
       
@@ -238,6 +239,7 @@ let R(~cid, ~credR, ~psk, measurement_hash) =
                         event SessionR(~cid, CRED_I, CRED_R, PRK_out, G_XY);
                         event AcceptRData(PRK_out, method, CRED_I, CRED_R, ~psk,~Y,G_X,<TH_2,TH_3,TH_4,suitesI, EAD_1, EAD_2, EAD_3, m1, plaintext_2, plaintext_3a>);
                         out(m4);
+                        event FinishR(~cid, CRED_I, CRED_R, PRK_out, ~psk, G_XY, ~Y, nonce_in, signature, pk_attkey);
                         (
                             0 
                             |
@@ -336,6 +338,7 @@ process:
     event HonestSubject(~credR);
 
     new ~ak;
+    event HonestAttKey(~ak);
     let certI = make_cert(~credI, pk(~ak)) in 
     out(certI); 
 

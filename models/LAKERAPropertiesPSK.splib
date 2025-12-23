@@ -125,27 +125,49 @@ lemma AttestationEvidenceIntegrity:
   (Ex #t. Compromise(psk)@t)
   "
 
-// Agreement of parameters for attestation and authentication
+
+  // Agreement of parameters for attestation and authentication
 // TODO
 lemma AgreementParamaters:
-"All cid m credI credR prk x gx y gy psk gxy ak #i #j #l #k #u.
-    AcceptI(cid, m, credI, credR, prk, x, gy, psk,ak, gxy)@i
-    & 
-    AcceptR(cid, m, credI, credR, prk, gx, y, psk, gxy)@j 
-    &
-    HonestSubject(credI)@u
-    &
-    HonestSubject(credR)@l
-    &
-    Honest(psk)@k
-  ==>
-  (Ex sig nonce meas pk_attkey #t. AttestationAcceptedR(cid, credI, credR, sig, nonce, meas, psk, y, gxy, pk_attkey) @t)
-  |
-  (Ex #t #c #l. LeakAttKey(ak)@t & Compromise(psk)@c &LeakShare(x)@l)
-  |
-  (Ex #t #c #l. LeakAttKey(ak)@t & Compromise(psk)@c &LeakShare(y)@l)
-  "
+  "All cid credI  credR  prk psk gxy y nonce sig pk_attkey #i #j #k #l #u.
+     FinishR(cid, credI, credR, prk, psk, gxy,y, nonce, sig, pk_attkey)@i
+     & 
+     Honest(psk)@j 
+     &
+     HonestSubject(credR)@k 
+     &
+     HonestSubject(credI)@l 
+   ==> (Ex ak x #t #u. SentByI(cid, credI, credR, prk, psk, gxy, x, nonce, sig, ak, pk_attkey)@t & t < i 
+   & HonestAttKey(ak)@u)
+    | 
+    (Ex #t. Compromise(psk)@t)
+    "   
 
+// // Agreement of parameters for attestation and authentication
+// // TODO
+// lemma AgreementParamaters:
+// "All cid m credI credR prk x gx y gy psk gxy ak #i #j #l #k #u.
+//     AcceptI(cid, m, credI, credR, prk, x, gy, psk,ak, gxy)@i
+//     & 
+//     AcceptR(cid, m, credI, credR, prk, gx, y, psk, gxy)@j 
+//     &
+//     HonestSubject(credI)@u
+//     &
+//     HonestSubject(credR)@l
+//     &
+//     Honest(psk)@k
+//   ==>
+//   (Ex sig nonce meas pk_attkey #t. AttestationAcceptedR(cid, credI, credR, sig, nonce, meas, psk, y, gxy, pk_attkey) @t)
+//   |
+//   (Ex #t #c #l. LeakAttKey(ak)@t & Compromise(psk)@c &LeakShare(x)@l)
+//   |
+//   (Ex #t #c #l. LeakAttKey(ak)@t & Compromise(psk)@c &LeakShare(y)@l)
+//   "
+
+// PASSED
+// Cryptographically binding the result's verification 
+// to the specific EDHOC secure channel instance, so that the attestation 
+//cannot be replayed, spliced, or reused across different sessions, peers, or keys.
 // PASSED
 lemma ChannelBinding:
 "All cid m credI credR psk gx y1 y2 prk gxy1 gxy2 pk_attkey sig meas nonce ak #i #j #l #k #u #c.
