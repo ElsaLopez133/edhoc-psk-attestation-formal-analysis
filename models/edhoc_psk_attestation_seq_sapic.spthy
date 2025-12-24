@@ -288,60 +288,60 @@ let LeakAttKey(ak) =
     in('Comp'); event LeakAttKey(ak); out(ak)
 
 
-process:
-  !(new ~psk; 
-    new ~credI; 
-    new ~credR;
-    out(~credI);
-    out(~credR);
-
-    event Honest(~psk);
-    event HonestSubject(~credI);
-    event HonestSubject(~credR);
-
-    new ~ak;
-    event HonestAttKey(~ak);
-    let certI = make_cert(~credI, pk(~ak)) in 
-    out(certI); 
-
-    !
-    (
-      new ~cid;
-      ( 
-        (I(~cid, method_four(), certI, ~psk, ~ak, ~credR))
-        |
-        (R(~cid, ~credR, ~psk))
-        |
-        (compromise(~psk))
-        |
-        (LeakAttKey(~ak))
-      )
-    )
-  )
-
 // process:
 //   !(new ~psk; 
+//     new ~credI; 
+//     new ~credR;
+//     out(~credI);
+//     out(~credR);
+
 //     event Honest(~psk);
+//     event HonestSubject(~credI);
+//     event HonestSubject(~credR);
+
+//     new ~ak;
+//     event HonestAttKey(~ak);
+//     let certI = make_cert(~credI, pk(~ak)) in 
+//     out(certI); 
 
 //     !
-//     ( 
-//       new ~cid; new ~cred; new ~akI;
-//       event HonestSubject(~cred);
-//       event HonestAttKey(~akI);
-//       out(~cred);
-//       let certI = make_cert(~cred, pk(~akI)) in 
-//       out(certI); 
-      
-//       ( ( !in(credR); I(~cid, method_four(), certI, ~psk, ~akI,  credR))
+//     (
+//       new ~cid;
+//       ( 
+//         (I(~cid, method_four(), certI, ~psk, ~ak, ~credR))
 //         |
-//         (!R(~cid, ~cred, ~psk))
+//         (R(~cid, ~credR, ~psk))
 //         |
 //         (compromise(~psk))
 //         |
-//         (LeakAttKey(~akI))
+//         (LeakAttKey(~ak))
 //       )
 //     )
 //   )
+
+process:
+  !(new ~psk; 
+    event Honest(~psk);
+
+    !
+    ( 
+      new ~cid; new ~cred; new ~akI;
+      event HonestSubject(~cred);
+      event HonestAttKey(~akI);
+      out(~cred);
+      let certI = make_cert(~cred, pk(~akI)) in 
+      out(certI); 
+      
+      ( ( !in(credR); I(~cid, method_four(), certI, ~psk, ~akI,  credR))
+        |
+        (!R(~cid, ~cred, ~psk))
+        |
+        (compromise(~psk))
+        |
+        (LeakAttKey(~akI))
+      )
+    )
+  )
 
 
 #include "LAKERAPropertiesPSK.splib"
