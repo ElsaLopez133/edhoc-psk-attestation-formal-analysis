@@ -8,16 +8,26 @@
 /* there exists at least one initiator AcceptI */
 lemma exists_acceptI[output=[proverif]]:
   exists-trace
-  "Ex cid m idI prk x gy credI credR psk #t.
-    AcceptI(cid, idI, m, credI, credR, prk, x, gy, psk) @ t"
+  "Ex cid m credI credR prk x gy psk akI gxy #t.
+    AcceptI(cid, m, credI, credR, prk, x, gy, psk, akI, gxy) @ t"
 
-/* there exists at least one responder AcceptR */
+lemma exists_startI[output=[proverif]]:
+  exists-trace
+  "Ex cid m credI credR psk #t.
+    StartI(cid,m,credI,credR,psk) @ t"
+
+    /* there exists at least one responder AcceptR */
 lemma exists_acceptR[output=[proverif]]:
   exists-trace
-  "Ex cid idR m prk gx y credI credR psk #t.
-    AcceptR(cid, idR, m, credI, credR, prk, gx, y, psk) @ t"
+  "Ex cid m credI credR prk gx y psk gxy #t.
+    AcceptR(cid,m, credI, credR, prk, gx, y, psk, gxy) @ t"
 
+lemma exists_startR[output=[proverif]]:
+  exists-trace
+  "Ex cid credR psk #t.
+    StartR(cid,credR,psk) @ t"
 #endif
+
 
 // ******************************************************************
 // ****Full Agreement: Authentication and key confirmation***********
@@ -93,10 +103,10 @@ lemma InjectiveAgreementIR:
 // Attestation freshness 
 // PASSED
 lemma AttestationEvidenceFreshness:
-  "All credI1 credI2 credR1 credR2 nonce meas1 meas2 sig1 sig2 cid1 cid2 psk1 psk2 pk_attkey1 pk_attkey2 y1 y2 gxy1 gxy2 #i #j #k.
-    AttestationAcceptedR(cid1, credI1, credR1, sig1, nonce, meas1, psk1, y1, gxy1, pk_attkey1)@i
+  "All credI1 credI2 credR1 credR2 nonce sig1 sig2 cid1 cid2 psk1 psk2 pk_attkey1 pk_attkey2 y1 y2 gxy1 gxy2 #i #j #k.
+    AttestationAcceptedR(cid1, credI1, credR1, sig1, nonce, psk1, y1, gxy1, pk_attkey1)@i
     &
-    AttestationAcceptedR(cid2, credI2, credR2, sig2, nonce, meas2, psk2, y2, gxy2, pk_attkey2)@j
+    AttestationAcceptedR(cid2, credI2, credR2, sig2, nonce, psk2, y2, gxy2, pk_attkey2)@j
     &
     HonestNonce(nonce)@k
   ==> 
@@ -109,8 +119,8 @@ lemma AttestationEvidenceFreshness:
 // Attestation integrity -> the evidence is not modified, so signature is correct
 // PASSED
 lemma AttestationEvidenceIntegrity:
-  "All m credI credR sig nonce meas cidR psk ak x y gx gxy pk_attkey prk #i #j #k #l.
-    VerifiedSignatureR(cidR, credI, credR, nonce, meas, sig, psk, y, gxy)@i    
+  "All m credI credR sig nonce cidR psk ak x y gx gxy pk_attkey prk #i #j #k #l.
+    VerifiedSignatureR(cidR, credI, credR, nonce, sig, psk, y, gxy, pk_attkey)@i    
     &
     HonestSubject(credI)@j
     &
@@ -118,7 +128,7 @@ lemma AttestationEvidenceIntegrity:
     &
     Honest(psk)@k
   ==> 
-  (Ex cidI ak x #t #c. AttestationGeneratedI(cidI, credI, credR, nonce, meas, sig, psk, ak, x, gxy)@t & t < i
+  (Ex cidI ak x #t #c. AttestationGeneratedI(cidI, credI, credR, nonce, sig, psk, ak, x, gxy, pk_attkey)@t & t < i
    & HonestAttKey(ak)@c)
   |
   (Ex #t. Compromise(psk)@t)
@@ -142,26 +152,6 @@ lemma AgreementParamaters:
     (Ex #t. Compromise(psk)@t)
     "   
 
-// // Agreement of parameters for attestation and authentication
-// // TODO
-// lemma AgreementParamaters:
-// "All cid m credI credR prk x gx y gy psk gxy ak #i #j #l #k #u.
-//     AcceptI(cid, m, credI, credR, prk, x, gy, psk,ak, gxy)@i
-//     & 
-//     AcceptR(cid, m, credI, credR, prk, gx, y, psk, gxy)@j 
-//     &
-//     HonestSubject(credI)@u
-//     &
-//     HonestSubject(credR)@l
-//     &
-//     Honest(psk)@k
-//   ==>
-//   (Ex sig nonce meas pk_attkey #t. AttestationAcceptedR(cid, credI, credR, sig, nonce, meas, psk, y, gxy, pk_attkey) @t)
-//   |
-//   (Ex #t #c #l. LeakAttKey(ak)@t & Compromise(psk)@c &LeakShare(x)@l)
-//   |
-//   (Ex #t #c #l. LeakAttKey(ak)@t & Compromise(psk)@c &LeakShare(y)@l)
-//   "
 
 // PASSED
 // Cryptographically binding the result's verification 
@@ -169,8 +159,8 @@ lemma AgreementParamaters:
 //cannot be replayed, spliced, or reused across different sessions, peers, or keys.
 // PASSED
 lemma ChannelBinding:
-"All cid m credI credR psk gx y gxy prk pk_attkey sig meas nonce ak #i #j #l #k #u #c.
-    AttestationAcceptedR(cid, credI, credR, sig, nonce, meas, psk, y, gxy, pk_attkey)@i 
+"All cid m credI credR psk gx y gxy prk pk_attkey sig nonce ak #i #j #l #k #u #c.
+    AttestationAcceptedR(cid, credI, credR, sig, nonce, psk, y, gxy, pk_attkey)@i 
     &
     AcceptR(cid, m, credI, credR, prk, gx, y, psk, gxy)@j
   ==>
@@ -181,19 +171,19 @@ lemma ChannelBinding:
     (Ex #t. Compromise(psk)@t )
   "
 
-lemma ChannelBinding_attack:
-  exists-trace
-  "Ex cid cidI m credI credR psk x gx y gy prk1 prk2 gxy1 gxy2 gxy pk_attkey ak sig meas nonce #i #j #k #l #n.
-      AttestationAcceptedR(cid, credI, credR, sig, nonce, meas, psk, y, gxy1, pk_attkey)@i
-      &
-      AcceptR(cid, m, credI, credR, prk1, gx, y, psk, gxy1)@j
-      &
-      AcceptI(cidI, m, credI, credR, prk2, x, gy, psk, ak, gxy2)@l
-      &
-      AttestationGeneratedI(cidI, credI, credR, nonce, meas, sig, psk, ak, x, gxy2, pk_attkey)@k
-      &
-      Compromise(psk)@n
-  "
+// lemma ChannelBinding_attack:
+//   exists-trace
+//   "Ex cid cidI m credI credR psk x gx y gy prk1 prk2 gxy1 gxy2 gxy pk_attkey ak sig meas nonce #i #j #k #l #n.
+//       AttestationAcceptedR(cid, credI, credR, sig, nonce, meas, psk, y, gxy1, pk_attkey)@i
+//       &
+//       AcceptR(cid, m, credI, credR, prk1, gx, y, psk, gxy1)@j
+//       &
+//       AcceptI(cidI, m, credI, credR, prk2, x, gy, psk, ak, gxy2)@l
+//       &
+//       AttestationGeneratedI(cidI, credI, credR, nonce, meas, sig, psk, ak, x, gxy2, pk_attkey)@k
+//       &
+//       Compromise(psk)@n
+//   "
 
 
 // ******************************************************************
