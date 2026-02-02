@@ -4,9 +4,9 @@
 export queries:
  "
 set preciseActions=true.
-set simplifyProcess = false.
-set reconstructTrace = false.
 "
+// set simplifyProcess = false.
+// set reconstructTrace = false.
 
 #ifdef LeakShare
 let CompromiseShare(s) =

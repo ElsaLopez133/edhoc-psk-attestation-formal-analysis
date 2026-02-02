@@ -79,10 +79,6 @@ let I(~cid, method, ~credI, ~psk, credR, ~akI, ~measurement) =
     let < C_R, EAD_2> = plaintext_2 in
     let <nonceR_in> = EAD_2 in
     let measurement_hash = hash(~measurement) in
-
-    // if (check_grp(G_Y) = grpid) then  // Not in the standard: we test against the value testgrpid, which is either a useless constant or the neutral element of the group.
-      //  0
-    // else 
     if method = method_four() then (
         let PRK_3e2m = PRK_2e in
         event DerivedIShared(G_YX);
@@ -124,6 +120,7 @@ let I(~cid, method, ~credI, ~psk, credR, ~akI, ~measurement) =
             let EAD_4 = plaintext_4 in
             event AcceptIData(PRK_out, method, CRED_I, CRED_R, ~psk,~X,G_Y,<TH_2,TH_3,TH_4,suitesI, EAD_1, EAD_2, EAD_3, m1, plaintext_2, plaintext_3a, plaintext_4>);
             event AcceptI(~cid, method, CRED_I, CRED_R, PRK_out, ~X, G_Y, ~psk, ~akI, G_YX);
+            event FinishI(~cid, CRED_I, CRED_R, G_YX, ~X, G_X, G_Y, nonceR_in, signature, measurement_hash, ID_CRED_Att, ~psk, pk(~akI));
             (
               0
               |
@@ -206,7 +203,7 @@ let R(~cid, ~credR, ~psk, ID_CRED_Att) =
         if verify(signature_in, <'Signature1',ID_CRED_Att, nonceR_in, measurement_hash_R>, pk_attkey_I) = true then (
             event VerifiedSignatureR(~cid, ID_CRED_Att, CRED_R, nonceR_in, signature_in, ~psk, ~Y, G_XY, pk_attkey_I);
             if ~nonceR = nonceR_in then (
-              event VerifiedNonceR(~cid, CRED_I, CRED_R, nonceR_in, ~psk, ~Y, G_XY, pk_attkey_I);
+              event VerifiedNonceR(~cid, CRED_I, CRED_R, signature_in, nonceR_in, ~psk, ~Y, G_XY, pk_attkey_I);
               event AttestationAcceptedR(~cid, CRED_I, CRED_R, nonceR_in, signature_in, G_XY, G_X, G_Y, TH_3, pk_attkey_I, ID_CRED_Att, ~psk);
               let TH_4 = hash(<wrap(TH_3), ID_CRED_PSK_in, plaintext_3b, CRED_I, CRED_R>) in
               let K_4 = edhoc_kdf(PRK_4e3m,'eight', TH_4, key_length) in
@@ -219,7 +216,7 @@ let R(~cid, ~credR, ~psk, ID_CRED_Att) =
               event AcceptR(~cid, method, CRED_I, CRED_R, PRK_out, G_X, ~Y, ~psk, G_XY);
               event SessionR(~cid, CRED_I, CRED_R, PRK_out, G_XY);
               event AcceptRData(PRK_out, method, CRED_I, CRED_R, ~psk,~Y,G_X,<TH_2,TH_3,TH_4,suitesI, EAD_1, EAD_2, EAD_3, m1, plaintext_2, plaintext_3a>);
-              event FinishR(~cid, CRED_I, CRED_R, PRK_out, ~psk, G_XY, ~Y, nonceR_in, signature_in, pk_attkey_I);
+              event FinishR(~cid, CRED_I, CRED_R, G_XY, ~Y, G_X, G_Y, nonceR_in, signature_in, measurement_hash_R, ID_CRED_Att, ~psk, pk_attkey_I);
 
               out(m4);
               (
@@ -237,7 +234,6 @@ let R(~cid, ~credR, ~psk, ID_CRED_Att) =
               let m4 = aeadenc(~EAD_4, K_4, IV_4, ad_4) in
               event DerivedR(~cid,PRK_out,~Y,G_X, ~psk);
               event AcceptR(~cid, method, CRED_I, CRED_R, PRK_out, G_X, ~Y, ~psk, G_XY);
-              event FinishR(~cid, CRED_I, CRED_R, PRK_out, ~psk, G_XY, ~Y, nonceR_in, signature_in, pk_attkey_I);
               event SessionR(~cid, CRED_I, CRED_R, PRK_out, G_XY);
               event AcceptRData(PRK_out, method, CRED_I, CRED_R, ~psk,~Y,G_X,<TH_2,TH_3,TH_4,suitesI, EAD_1, EAD_2, EAD_3, m1, plaintext_2, plaintext_3a>);
               out(m4);
@@ -259,8 +255,6 @@ let R(~cid, ~credR, ~psk, ID_CRED_Att) =
             event AcceptR(~cid, method, CRED_I, CRED_R, PRK_out, G_X, ~Y, ~psk, G_XY);
             event SessionR(~cid, CRED_I, CRED_R, PRK_out, G_XY);
             event AcceptRData(PRK_out, method, CRED_I, CRED_R, ~psk,~Y,G_X,<TH_2,TH_3,TH_4,suitesI, EAD_1, EAD_2, EAD_3, m1, plaintext_2, plaintext_3a>);
-            event FinishR(~cid, CRED_I, CRED_R, PRK_out, ~psk, G_XY, ~Y, nonceR_in, signature_in, pk_attkey_I);
-
             out(m4);
             (
                 0 
