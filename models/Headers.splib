@@ -1,6 +1,12 @@
 // headers.splib for EDHOC-PSK (method_four)
 // We include here the attacker capabilities
 
+export queries:
+ "
+set preciseActions=true.
+"
+// set simplifyProcess = false.
+// set reconstructTrace = false.
 
 #ifdef LeakShare
 let CompromiseShare(s) =

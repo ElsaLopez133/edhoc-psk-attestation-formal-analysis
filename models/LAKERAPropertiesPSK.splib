@@ -8,16 +8,26 @@
 /* there exists at least one initiator AcceptI */
 lemma exists_acceptI[output=[proverif]]:
   exists-trace
-  "Ex cid m idI prk x gy credI credR psk #t.
-    AcceptI(cid, idI, m, credI, credR, prk, x, gy, psk) @ t"
+  "Ex cid m credI credR prk x gy psk akI gxy #t.
+    AcceptI(cid, m, credI, credR, prk, x, gy, psk, akI, gxy) @ t"
 
-/* there exists at least one responder AcceptR */
+lemma exists_startI[output=[proverif]]:
+  exists-trace
+  "Ex cid m credI credR psk #t.
+    StartI(cid,m,credI,credR,psk) @ t"
+
+    /* there exists at least one responder AcceptR */
 lemma exists_acceptR[output=[proverif]]:
   exists-trace
-  "Ex cid idR m prk gx y credI credR psk #t.
-    AcceptR(cid, idR, m, credI, credR, prk, gx, y, psk) @ t"
+  "Ex cid m credI credR prk gx y psk gxy #t.
+    AcceptR(cid,m, credI, credR, prk, gx, y, psk, gxy) @ t"
 
+lemma exists_startR[output=[proverif]]:
+  exists-trace
+  "Ex cid credR psk #t.
+    StartR(cid,credR,psk) @ t"
 #endif
+
 
 // ******************************************************************
 // ****Full Agreement: Authentication and key confirmation***********
@@ -30,77 +40,87 @@ lemma exists_acceptR[output=[proverif]]:
 // a session as an Initiator
 
 // PASSED
-lemma MutualAuthenticationRI:
-  "All cid m credI  credR  prk gx y psk gxy #i #j #k #l.
-     AcceptR(cid, m, credI, credR, prk, gx, y, psk, gxy)@i
-     & 
-     Honest(psk)@j 
-     &
-     HonestSubject(credR)@k 
-     &
-     HonestSubject(credI)@l 
-   ==> (Ex cidI gy x ak #t. DerivedI(cidI, m, credI, credR, prk, x, gy, psk, ak, gxy)@t & t < i)
-    | 
-    (Ex #t. Compromise(psk)@t)
-    "   
+// lemma MutualAuthenticationRI:
+//   "All cid m credI  credR  prk gx y psk gxy #i #j #k #l.
+//      AcceptR(cid, m, credI, credR, prk, gx, y, psk, gxy)@i
+//      & 
+//      Honest(psk)@j 
+//      &
+//      HonestSubject(credR)@k 
+//      &
+//      HonestSubject(credI)@l 
+//    ==> (Ex cidI gy x ak #t. DerivedI(cidI, m, credI, credR, prk, x, gy, psk, ak, gxy)@t & t < i)
+//     | 
+//     (Ex #t. Compromise(psk)@t)
+//     "   
 
-// PASSED
-lemma MutualAuthenticationIR:
-  "All cid m credI  credR  prk x  gy psk ak gxy #i #j #k #l.
-     AcceptI(cid, m, credI, credR, prk, x, gy, psk, ak, gxy)@i
-     & 
-     Honest(psk)@j 
-     &
-     HonestSubject(credR)@k 
-     &
-     HonestSubject(credI)@l 
-   ==> (Ex cidR y gx #t. AcceptR(cidR, m, credI, credR, prk, gx, y, psk, gxy)@t & t < i)
-    | 
-    (Ex #t. Compromise(psk)@t)
-    "   
+// // PASSED
+// lemma MutualAuthenticationIR:
+//   "All cid m credI  credR  prk x  gy psk ak gxy #i #j #k #l.
+//      AcceptI(cid, m, credI, credR, prk, x, gy, psk, ak, gxy)@i
+//      & 
+//      Honest(psk)@j 
+//      &
+//      HonestSubject(credR)@k 
+//      &
+//      HonestSubject(credI)@l 
+//    ==> (Ex cidR y gx #t. AcceptR(cidR, m, credI, credR, prk, gx, y, psk, gxy)@t & t < i)
+//     | 
+//     (Ex #t. Compromise(psk)@t)
+//     "   
 
-// Injectivity of the Agreement from Responder to Initiator
-lemma InjectiveAgreementRI:
-  "All cid1 cid2 m credI credR prk gx1 gx2 y1 y2 psk gxy1 gxy2 #i #j #k #l.
-     AcceptR(cid1, m, credI, credR, prk, gx1, y1, psk, gxy1)@i
-     &
-     AcceptR(cid2, m, credI, credR, prk, gx2, y2, psk, gxy2)@j
-     &
-     Honest(psk)@k
-     &
-     HonestSubject(credR)@l
-   ==> 
-    (#i = #j)
-    | 
-    (Ex #t. Compromise(psk)@t)
-    "
+// // Injectivity of the Agreement from Responder to Initiator
+// lemma InjectiveAgreementRI:
+//   "All cid1 cid2 m credI credR prk gx1 gx2 y1 y2 psk gxy1 gxy2 #i #j #k #l.
+//      AcceptR(cid1, m, credI, credR, prk, gx1, y1, psk, gxy1)@i
+//      &
+//      AcceptR(cid2, m, credI, credR, prk, gx2, y2, psk, gxy2)@j
+//      &
+//      Honest(psk)@k
+//      &
+//      HonestSubject(credR)@l
+//    ==> 
+//     (#i = #j)
+//     "
 
-lemma InjectiveAgreementIR:
-  "All cid1 cid2 m credI credR prk x1 x2 gy1 gy2 psk gxy1 gxy2 #i #j #k #l.
-     AcceptI(cid1, m, credI, credR, prk, x1, gy1, psk, ak1, gxy1)@i
-     &
-     AcceptI(cid2, m, credI, credR, prk, x2, gy2, psk, ak2, gxy2)@j
-     &
-     Honest(psk)@k
-     &
-     HonestSubject(credR)@l
-   ==> 
-    (#i = #j)
-    | 
-    (Ex #t. Compromise(psk)@t)
-    "
+// lemma InjectiveAgreementIR:
+//   "All cid1 cid2 m credI credR prk x1 x2 gy1 gy2 psk gxy1 gxy2 ak1 ak2 #i #j #k #l.
+//      AcceptI(cid1, m, credI, credR, prk, x1, gy1, psk, ak1, gxy1)@i
+//      &
+//      AcceptI(cid2, m, credI, credR, prk, x2, gy2, psk, ak2, gxy2)@j
+//      &
+//      Honest(psk)@k
+//      &
+//      HonestSubject(credR)@l
+//    ==> 
+//     (#i = #j)
+//     "
 
 // ******************************************************************
 // ***************** Attestation ************************************
 // ******************************************************************
 
-// Attestation freshness 
-// PASSED
+// Evidence freshness -> The Evidence is freshly generated and unique, preventing the replay of the Evidence
+// result: TRUE
+/*
+  Formalization:
+  For any freshly generated nonce in Evidence, if Responder verifies the nonce, then this verification is unique and 
+  cannot happen in two distinct sessions, and the nonce was created earlier than the verification event.
+  
+  Events: 
+  VerifiedNonceR is placed just after the Responder checks the nonce is equal to the one generated before, and before the Responder 
+  establishes connection.
+  Honest(nonce) is placed when the nonce is created, to make sure it is a fresh nonce.
+
+  Parmeters:
+  cidI and cidR are the computer IDs, credI and credR are public authentication identities, nonce is random bytes 
+  generated by the Responder, psk is the preshared key, y is private DH key, gxy is the shared secret, pk_attkey is the public attestation key.
+*/ 
 lemma AttestationEvidenceFreshness:
-  "All credI1 credI2 credR1 credR2 nonce meas1 meas2 sig1 sig2 cid1 cid2 psk1 psk2 pk_attkey1 pk_attkey2 y1 y2 gxy1 gxy2 #i #j #k.
-    AttestationAcceptedR(cid1, credI1, credR1, sig1, nonce, meas1, psk1, y1, gxy1, pk_attkey1)@i
+  "All credI1 credI2 credR1 credR2 nonce sig1 sig2 cid1 cid2 psk1 psk2 pk_attkey1 pk_attkey2 y1 y2 gxy1 gxy2 #i #j #k.
+    VerifiedNonceR(cid1, credI1, credR1, sig1, nonce, psk1, y1, gxy1, pk_attkey1)@i
     &
-    AttestationAcceptedR(cid2, credI2, credR2, sig2, nonce, meas2, psk2, y2, gxy2, pk_attkey2)@j
+    VerifiedNonceR(cid2, credI2, credR2, sig2, nonce, psk2, y2, gxy2, pk_attkey2)@j
     &
     HonestNonce(nonce)@k
   ==> 
@@ -109,47 +129,158 @@ lemma AttestationEvidenceFreshness:
   (#k < #i)
   "
 
+// Attestation Result freshness
+// result: TRUE
+/*
+  Formalization:
+  For any freshly generated nonce in Attestation Result, if Initiator verifies the nonce, then this verification is unique and 
+  cannot happen in two distinct sessions, and the nonce was created earlier than the verification event.
+  
+  Events: 
+  VerifiedNonceI is placed just after the Initiator checks the nonce is equal to the one generated before, and before the Initiator 
+  establishes connection.
+  HonestNonceI(nonce) is placed when the nonce is created, to make sure it is a fresh nonce.
 
-// Attestation integrity -> the evidence is not modified, so signature is correct
-// PASSED
+  Parmeters:
+  cidI and cidR are the computer IDs, credI and credR are public authentication identities, nonce is random bytes 
+  generated by the Initiator, x is private DH key, pk_attkey is the public attestation key.  
+*/ 
+lemma AttestationResultFreshness:
+  "All cid1 cid2 credI1 credI2 credR1 credR2 nonce sig1 sig2  x1 x2 gyx1 gyx2 pk_attkey1 pk_attkey2 #i #j #k.
+    VerifiedNonceI(cid1, credI1, credR1, sig1, nonce, x1, gyx1, pk_attkey1)@i
+    &
+    VerifiedNonceI(cid2, credI2, credR2, sig2, nonce, x2, gyx2, pk_attkey2)@j
+    &
+    HonestNonceI(nonce)@k
+  ==> 
+  (#i = #j)
+  &
+  (#k < #i)
+  "
+
+// Attestation Evidence integrity -> The evidence is not modified or tampered with after the Evidence is generated.
+// result: TRUE
+/*
+  Formalization:
+  For all evidences that the Responder accepts, an honest Initiator has 
+  previously generated those evidences before, or the Initiator's attestation key is leaked, or the preshared key is compromised.
+  
+  Events: 
+  VerifiedSignatureR is placed after the Evidence signature is checked, and before the Initiator 
+  establishes connection.
+  HonestSubject(credI) is placed when the Initiator is created, to make sure this is an honest Initiator.
+  AttestationGeneratedI is placed just after the Initiator generates the Evidence.
+
+  Parmeters:
+  cidI and cidR are the computer IDs, credI and credR are public authentication identities, nonce is random bytes 
+  generated by the Responder, sig is the signature in Evidence, x and y are private DH keys, gxy is the session shared secret.
+  pk_attkey is the public attestation key.
+*/
 lemma AttestationEvidenceIntegrity:
-  "All m credI credR sig nonce meas cidR psk ak x y gx gxy pk_attkey prk #i #j #k #l.
-    VerifiedSignatureR(cidR, credI, credR, nonce, meas, sig, psk, y, gxy)@i    
+  "All m credI credR sig nonce cidR psk ak x y gx gxy pk_attkey prk #i #j #k #l.
+    VerifiedSignatureR(cidR, credI, credR, nonce, sig, psk, y, gxy, pk_attkey)@i    
     &
     HonestSubject(credI)@j
-    &
-    HonestSubject(credR)@l
-    &
-    Honest(psk)@k
   ==> 
-  (Ex cidI ak x #t. AttestationGeneratedI(cidI, credI, credR, nonce, meas, sig, psk, ak, x, gxy)@t & t < i)
+  (Ex cidI ak x #t #c. AttestationGeneratedI(cidI, credI, credR, nonce, sig, psk, ak, x, gxy, pk_attkey)@t & t < i)
   |
-  (Ex #t. LeakAttKey(ak)@t)
+  (Ex ak #t. LeakAttKey(ak)@t)
   |
   (Ex #t. Compromise(psk)@t)
   "
 
+// Result integrity -> the Attestation Result is not modified or tampered with after the Evidence is generated.
+// result: TRUE
+/*
+  Formalization:
+  For all results that the Initiator accepts, an honest Responder has 
+  previously generated those results before, or the Responder's attestation key is leaked, or the private long term keys are compromised. 
+  
+  Events: 
+  VerifiedSignatureI is placed after the Result signature is checked, and before the Responder 
+  establishes connection.
+  Honest(pkR) is placed when the Responder is created, to make sure this is an honest Responder.
+  ResultGeneratedR is placed just after the Responder generates the Result.
 
-// Attestation + Authentication
-// TODO
-// lemma AttestationAuthentication:
-// "All cid1 cid2 m credI credR prk x gx y gy psk ak gxy #i #j #l #k #u.
-//     AcceptI(cid1, m, credI, credR, prk, x, gy, psk, ak, gxy)@i
-//     & 
-//     AcceptR(cid2, m, credI, credR, prk, gx, y, psk, gxy)@j 
-//     &
-//     HonestSubject(credI)@u
-//     &
-//     HonestSubject(credR)@l
-//     &
-//     Honest(psk)@k
-//   ==>
-//   (Ex cid sig pk_attkey nonce meas #t. AttestationAcceptedR(cid1, credI, credR, sig, nonce, meas, psk, y, gxy, pk_attkey) @t)
-//   |
-//   (Ex #t #c #l. LeakAttKey(ak)@t & Compromise(psk)@c &LeakShare(x)@l)
-//   |
-//   (Ex #t #c #l. LeakAttKey(ak)@t & Compromise(psk)@c &LeakShare(y)@l)
-//   "
+  Parmeters:
+  cidI and cidR are the computer IDs, pkI and pkR are public long-term keys, nonce is a random bytes 
+  generated by Verifiers, sig is the signature in Evidence, x and y are private DH keys, gxy is the session shared secret.
+*/
+lemma AttestationResultIntegrity:
+  "All cidI credI credR nonce sig x gxy psk pk_attkey #i #j.
+    VerifiedSignatureI(cidI, credI, credR, nonce, sig, x, gxy, pk_attkey)@i
+    &
+    HonestSubject(credR)@j
+  ==> 
+  (Ex cidR ak y #t. 
+    ResultGeneratedR(cidR, credI, credR, nonce, sig, psk, ak, y, gxy, pk_attkey)@t 
+    & t < i)
+  |
+  (Ex ak #t. LeakAttKey(ak)@t)
+  |
+  (Ex #t. Compromise(psk)@t)
+  "
+
+// Agreement on parameters of attestation and authentication
+// result is TRUE
+/*
+  Formalization:
+  If an honest Initiator finishes the session with attestation and authentication parameters, the honest Responder must have finished with the same 
+  attestation and authentication parameters.
+  
+  Events: 
+  FinishI is placed when Initiator is ready to establish the connection.
+  Honest(psk) is placed when psk is generated.
+  HonestSubject(credR) and HonestSubject(credR) are placed when the Initiator and Responder are created.
+  FinishR is placed when Responder is ready to establish the connection.
+
+  Parmeters:
+  cidI and cidR are the computer IDs, credI and credR are public identities, gxy is shared session secret, x and y are private DH keys,
+  nonce is the random bytes generated by the Responder, sig is the signature generated by Initiator, dev_state is the measurement result for attestation,
+  id_att is the attestation identity, psk is the preshared key, pk_attkey and is public attestation key.
+*/ 
+lemma AgreementParamaters:
+  "All cidI credI credR gxy x gx gy nonceI nonceR sigI sigR dev_state id_att id_att_result psk pk_attkeyI pk_attkey_v #i #j #k #l #u.
+     FinishI(cidI, credI, credR, gxy, x, gx, gy, nonceI, nonceR, sigI, sigR, dev_state, id_att, id_att_result, psk, pk_attkeyI, pk_attkey_v)@i
+     &
+     HonestSubject(credR)@k 
+     &
+     HonestSubject(credI)@l 
+   ==> (Ex cidR y #t. FinishR(cidR, credI, credR, gxy, y, gx, gy, nonceI, nonceR, sigI, sigR, dev_state, id_att, id_att_result, psk, pk_attkeyI, pk_attkey_v)@t & t < i) 
+    | 
+    (Ex #t. Compromise(psk)@t)
+    |
+    (Ex ak #t. LeakAttKey(ak)@t)
+    "   
+
+// Channel binding property for Evidence (sent in EAD_3) -> the Evidence should be generated by the authenticated peer.
+// result is FALSE in edhoc_psk_attestation_seq_sapic.spthy, result is TRUE in the proposed fix file edhoc_psk_attestation_seq_sapic_fix.spthy.
+/*
+  Formalization:
+  If Responder accepts an Evidence in the session, then Initiator must have been previously generated this Evidence in the same session, unless there is 
+  a leakage of attestation key.
+  
+  Events: 
+  AttestationAcceptedR is placed after the evidence signature and nonce checks passed, and before Responder establishes the connection.
+  SentByI is placed just before Initiator is about to send message 3, which contains the Evidence.
+
+  Parmeters:
+  cidI and cidR are the computer IDs, credI and credR are public authentication identities, nonce is a random bytes 
+  generated by the Responder, gxy is shared session secret, gx and gy are public DH keys, th3 is the transcript hash of message 3, 
+  pk_attkey is the public attestation key, id_att is the identity used for attestation, psk is the preshared key.
+  
+*/ 
+lemma ChannelBindingEvidence:
+"All cidR credI credR nonce sig gxy gx gy th3 pk_attkey id_att psk #j.
+    AttestationAcceptedR(cidR, credI, credR, nonce, sig, gxy, gx, gy, th3, pk_attkey, id_att, psk)@j
+  ==>
+    (Ex cidI ak #i.
+        SentByI(cidI, credI, credR, nonce, sig, gxy, gx, gy, th3, ak, pk_attkey, id_att, psk)@i
+        & i < j
+    )
+    |
+    (Ex ak #t. LeakAttKey(ak)@t)
+"
 
 // ******************************************************************
 // ************** Attacker capabilities *****************************

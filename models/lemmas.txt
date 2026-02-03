@@ -1,0 +1,8 @@
+AgreementParamaters
+ChannelBinding
+MutualAuthenticationRI
+MutualAuthenticationIR
+InjectiveAgreementIR
+InjectiveAgreementRI
+AttestationEvidenceFreshness
+AttestationEvidenceIntegrity
