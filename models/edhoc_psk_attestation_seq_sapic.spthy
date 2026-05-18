@@ -1,6 +1,6 @@
 /*
  * Protocol:   Remote Attestation for EDHOC-PSK
- * Source:     
+ * Source: https://www.ietf.org/archive/id/draft-ietf-lake-ra-05.html
 
  Scenarios to check ideally:
  - `tamarin-prover -D=LeakShare`
