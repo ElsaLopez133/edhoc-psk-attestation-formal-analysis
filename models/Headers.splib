@@ -14,11 +14,11 @@ let CompromiseShare(s) =
 #else
 let CompromiseShare(s) = event LeakShare('null'); 0
 
-export queries:
-"
-axiom k:bitstring; event(eShare( k )) && attacker( k ) ==> event(eLeakShare(k)).
-set preciseActions=true.
-"
+// export queries:
+// "
+// axiom k:bitstring; event(eShare( k )) && attacker( k ) ==> event(eLeakShare(k)).
+// set preciseActions=true.
+// "
 #endif
 
 #ifdef LeakSKey

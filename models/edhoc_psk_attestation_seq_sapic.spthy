@@ -97,7 +97,12 @@ let I(~cid, method, ~credI, ~psk, credR, ~akI, ~measurement, ID_CRED_Att_resultR
         // Construction of EAD_3
         new ~nonceI;
 				event HonestNonceI(~nonceI);
-        let signature = sign(<'Signature1',ID_CRED_Att, nonceR_in, measurement_hash>, ~akI) in
+        // attestation binder
+        let H_12 = hash(hash(m1), m2) in
+				let attest_info = <H_12, 'attestation', CRED_I> in
+				let attestation_binder_m3 = hkdfexpand('salt', attest_info) in
+
+        let signature = sign(<'Signature1',ID_CRED_Att, nonceR_in, measurement_hash, attestation_binder_m3>, ~akI) in
         let EAD_3 = <ID_CRED_Att, nonceR_in, signature, ~nonceI> in
         event AttestationGeneratedI(~cid, CRED_I, CRED_R, nonceR_in, signature, ~psk, ~akI, ~X, G_YX, pk(~akI));
 
@@ -206,7 +211,10 @@ let R(~cid, ~credR, ~psk, ID_CRED_Att, ~value, ~akV) =
         let <=ID_CRED_Att, nonceR_in, signature_in, nonceI_in> = EAD_3 in
         let measurement_hash_R = get_meas(ID_CRED_Att) in
         let pk_attkey_I = get_att_key(ID_CRED_Att) in
-        if verify(signature_in, <'Signature1',ID_CRED_Att, nonceR_in, measurement_hash_R>, pk_attkey_I) = true then (
+        let H_12 = hash(hash(m1), m2) in
+				let attest_info = <H_12, 'attestation', CRED_I> in
+				let attestation_binder_m3 = hkdfexpand('salt', attest_info) in
+        if verify(signature_in, <'Signature1',ID_CRED_Att, nonceR_in, measurement_hash_R, attestation_binder_m3>, pk_attkey_I) = true then (
             event VerifiedSignatureR(~cid, ID_CRED_Att, CRED_R, nonceR_in, signature_in, ~psk, ~Y, G_XY, pk_attkey_I);
             if ~nonceR = nonceR_in then (
               event VerifiedNonceR(~cid, CRED_I, CRED_R, signature_in, nonceR_in, ~psk, ~Y, G_XY, pk_attkey_I);
